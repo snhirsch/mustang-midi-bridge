@@ -38,5 +38,6 @@ as appropriate
 
 Both the amplifier and MIDI source should be connected first, then:
 
-$ mustang_midi <midi_port#> <midi_listen_channel#>
+$ mustang_midi _midi_port#_ _midi_listen_channel#_
+
 
