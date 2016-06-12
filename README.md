@@ -20,9 +20,9 @@ from whence the USB interface code is stolen.
 
 I'm working on Ubuntu Precise, YMMV for other distributions.
 
-libjack-dev
-librtmidi-dev (2.0.1 - May need changes for newer versions)
-libusb-1.0
+  + libjack-dev
+  + librtmidi-dev (2.0.1 - May need changes for newer versions)
+  + libusb-1.0
 
 # Build
 
