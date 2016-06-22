@@ -1,8 +1,9 @@
+// -*-c++-*-
 
 #ifndef MUSTANG_H
 #define MUSTANG_H
 
-#include <stdio.h>
+#include <cstdio>
 #include <string.h>
 #include <unistd.h>
 #include <libusb-1.0/libusb.h>
@@ -10,6 +11,7 @@
 #include "effects_enum.h"
 #include "data_structs.h"
 //#include <time.h>
+#include "amp.h"
 
 // amp's VID and PID
 #define USB_VID 0x1ed8
@@ -69,30 +71,74 @@
 #define SAVE_SLOT 4
 #define FXKNOB 3
 
-// effect category (slot in 'prev_array').  Used to toggle state.
-#define STOMP 0
-#define MOD 1
-#define DELAY 2
-#define REVERB 3
+// direct control fields
+#define FAMILY 2
+#define ACTIVE_INVERT 3
+
+// Index into current state structure
+#define PRESET_NAME  0
+#define AMP_STATE    1
+#define STOMP_STATE  2
+#define MOD_STATE    3
+#define DELAY_STATE  4
+#define REVERB_STATE 5
+#define EXP_STATE    6
+
+// DSP Category
+#define AMP_DSP      5
+#define STOMP_DSP    6
+#define MOD_DSP      7
+#define DELAY_DSP    8
+#define REVERB_DSP   9
+
+// DSP Family (used for direct parm set) - Effectively DSP - 3
+#define STOMP_FAM    3
+#define MOD_FAM      4
+#define DELAY_FAM    5
+#define REVERB_FAM   6
+
+// Amp id values
+#define F57_DELUXE_ID    0x67
+#define F59_BASSMAN_ID   0x64
+#define F57_CHAMP_ID     0x7c
+#define F65_DELUXE_ID    0x53
+#define F65_PRINCETON_ID 0x6a
+#define F65_TWIN_ID      0x75
+#define F_SUPERSONIC_ID  0x72
+#define BRIT_60S_ID      0x61
+#define BRIT_70S_ID      0x79
+#define BRIT_80S_ID      0x5e
+#define US_90S_ID        0x5d
+#define METAL_2K_ID      0x6d
+#define STUDIO_PREAMP_ID 0xf1
+
+#define F57_TWIN_ID      0xf6
+#define S60S_THRIFT_ID   0xf9
+#define BRIT_WATT_ID     0xff
+#define BRIT_COLOR_ID    0xfc
 
 class Mustang
 {
 public:
     Mustang();
     ~Mustang();
-    int start_amp(char list[][32]=NULL, char *name=NULL, struct amp_settings *amp_set=NULL, struct fx_pedal_settings *effects_set=NULL);    // initialize communication
+    int start_amp(void);    // initialize communication
     int stop_amp(void);    // terminate communication
     int set_effect(struct fx_pedal_settings);
-    int set_amplifier(struct amp_settings);
+    int setAmp( int ord );
     int save_on_amp(char *, int);
-    int load_memory_bank(int, char *name=NULL, struct amp_settings *amp_set=NULL, struct fx_pedal_settings *effects_set=NULL);
+    int load_memory_bank(int);
     int save_effects(int , char *, int , struct fx_pedal_settings *);
-    int update(char *);
 
     // State:  1 = off, 0 = on
     int effect_toggle(int category, int state);
 
-private:
+    int control_common1(int parm, int bucket, int value);
+    int control_common2(int parm, int bucket, int value);
+
+    AmpCC * getAmp( void ) { return curr_amp;}
+    
+ private:
     libusb_device_handle *amp_hand;    // handle for USB communication
     unsigned char execute[LENGTH];    // "apply" command sent after each instruction
 
@@ -106,7 +152,22 @@ private:
     //
     unsigned char prev_array[4][LENGTH];    // array used to clear the effect
 
-    int decode_data(unsigned char [6][LENGTH], char *name=NULL, struct amp_settings *amp_set=NULL, struct fx_pedal_settings *effects_set=NULL);
+    
+    // Current state of amp.
+    //
+    // 0 : Preset Name
+    // 1 : Amp
+    // 2 : Stomp
+    // 3 : Mod
+    // 4 : Delay
+    // 5 : Reverb
+    // 6 : Expression Pedal
+    //
+    unsigned char curr_state[7][LENGTH];
+    
+    AmpCC * curr_amp;
+
+    void updateAmp(void);
 };
 
 #endif // MUSTANG_H

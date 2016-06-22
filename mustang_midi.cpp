@@ -5,17 +5,12 @@
 
 #include "mustang.h"
 
-static Mustang amp;
-
-static amp_settings amp_parms;
-static fx_pedal_settings pedal_parms;
-static char name[32];
-static char names[100][32];
+static Mustang mustang;
 
 static int channel;
 
 void message_action( double deltatime, std::vector< unsigned char > *message, void *userData ) {
-#if 1
+#if 0
   unsigned int nBytes = message->size();
   if ( nBytes > 0 ) {
     for ( unsigned int i=0; i<nBytes; i++ )
@@ -28,31 +23,87 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
   int msg_channel = (*message)[0] & 0x0f;
   if ( msg_channel != channel ) return;
 
-  int rc;
   int msg_type = (*message)[0] & 0xf0;
+
   switch ( msg_type ) {
+
   case 0xc0: {
     // Program change
     int bank = (int)(*message)[1];
-    rc = amp.load_memory_bank( bank, name, &amp_parms, &pedal_parms );
+    int rc = mustang.load_memory_bank( bank );
     if ( rc ) {
-      std::cout << "Error: load_memory_bank " << bank << " failed. rc = " << rc << "\n";
+      fprintf( stderr, "Error: PC#%d failed. RC = %d\n", bank, rc );
     }
   }
   break;
     
   case 0xb0: {
     // Control change
-    if ( (*message)[1] >= 23 && (*message)[1] <= 26 ) {
-      int category = (*message)[1] - 23;
-      int value = (*message)[2];
+    int rc;
+    int cc = (*message)[1];
+    int value = (*message)[2];
+    AmpCC *ampModel = mustang.getAmp();
+
+    // Effects on/off
+    if ( cc >= 23 && cc <= 26 ) {
+      // Translate 23..26 --> 2..5 (current state index)
+      int index = cc - 21;
       int state;
-      if      ( value >= 0 && value <= 63 )  state = 1;
-      else if ( value > 63 && value <= 127 ) state = 0;
-      rc = amp.effect_toggle( category, state );
-      if ( rc ) {
-        std::cout << "Error: effect_toggle " << category << " failed. rc = " << rc << "\n";
-      }
+      if      ( value >= 0 && value <= 63 )  state = 0;
+      else if ( value > 63 && value <= 127 ) state = 1;
+      rc = mustang.effect_toggle( index, state );
+    }
+    // Set amp model
+    else if ( cc == 68 ) {
+      // fprintf( stderr, "DEBUG: %d\n", value );
+      rc = mustang.setAmp( value );
+    }
+    // Gain
+    else if ( cc == 69 ) {
+      rc = ampModel->cc69( value );
+    }
+    // Channel volume
+    else if ( cc == 70 ) {
+      rc = ampModel->cc70( value );
+    }
+    // Treble
+    else if ( cc == 71 ) { 
+      rc = ampModel->cc71( value );
+    }
+    // Mid
+    else if ( cc == 72 ) {
+      rc = ampModel->cc72( value );
+    }
+    // Bass
+    else if ( cc == 73 ) {
+      rc = ampModel->cc73( value );
+    }
+    // Sag
+    else if ( cc == 74 ) {
+      rc = ampModel->cc74( value );
+    }
+    // Bias
+    else if ( cc == 75 ) {
+      rc = ampModel->cc75( value );
+    }
+    // Noise Gate
+    else if ( cc == 76 ) {
+      rc = ampModel->cc76( value );
+    }
+    // Cabinet
+    else if ( cc == 77 ) {
+      rc = ampModel->cc77( value );
+    }
+    // Presence / Gain2 / Cut
+    else if ( cc == 78 ) {
+      rc = ampModel->cc78( value );
+    }
+    // Blend / Master Volume
+    else if ( cc == 79 ) {
+      rc = ampModel->cc79( value );
+    }
+    if ( rc ) {
+      fprintf( stderr, "Error: CC#%d failed. RC = %d\n", cc, rc );
     }
   }
   break;
@@ -84,7 +135,7 @@ int main( int argc, const char **argv ) {
   if ( endptr == argv[0] ) usage();
   if ( channel < 0 || channel > 15 ) usage();
 
-  int rc = amp.start_amp( names, name, &amp_parms, &pedal_parms );
+  int rc = mustang.start_amp();
   if (rc) {
     std::cout << "Fender USB initialization failed: " << rc << "\n";
     return 8;

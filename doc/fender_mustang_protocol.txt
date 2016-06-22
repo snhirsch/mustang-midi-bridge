@@ -631,7 +631,7 @@ Toggling effect on/off:
      0                                       1
      0   1   2   3   4   5   6   7   8   9   0   1   2   3   4   5
    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
-00 | 19| c3|DSP| st|slt|                  00                       |
+00 | 19| c3|fam| st|slt|                  00                       |
    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
 16 |                            00                                 |
    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
@@ -640,7 +640,7 @@ Toggling effect on/off:
 48 |                            00                                 |
    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
 
-DSP - can be either 6, 7, 8 or 9; depends on effect familly
+fam - (3 = stomp, 4 = mod, 5 = delay, 6 = reverb)
 st - status (on = 00, off = 01)
 slt - slot; before amp have numbers from 0 to 3, after from 4 to 7
 
@@ -659,7 +659,7 @@ slt - slot; before amp have numbers from 0 to 3, after from 4 to 7
 48 | ? | ? | ? | ? | ? |                    00                     |
    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
 
-DSP - can be either 6, 7, 8 or 9; depends on effect familly
+efx_family - (3 = stomp, 4 = mod, 5 = delay, 6 = reverb)
 fxm - effect model; independent for each effect
 slt - slot; before amp have numbers from 0 to 3, after from 4 to 7
 
