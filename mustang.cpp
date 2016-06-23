@@ -109,13 +109,16 @@ int Mustang::start_amp(void)
     // Request parameter dump from amplifier
     libusb_interrupt_transfer(amp_hand, 0x01, array, LENGTH, &received, TMOUT);
     
-    for(i = 0; received; i++)
+    // Count probably varies by model. Brute-force flush appears to create problems
+    // so we'll need to get this right case by case.
+    for(i = 0; i < 210; i++)
     {
-        libusb_interrupt_transfer(amp_hand, 0x81, array, LENGTH, &received, TMOUT);
+        int rc = libusb_interrupt_transfer(amp_hand, 0x81, array, LENGTH, &received, TMOUT);
+        if (rc) fprintf( stderr, "DEBUG: Timeout. i = %d, rc = %d\n", i, rc );
         memcpy(received_data[i], array, LENGTH);
     }
     
-    fprintf( stderr, "DEBUG: Packet count = %d\n", i );
+    // fprintf( stderr, "DEBUG: Packet count = %d\n", i );
     
     int max_to_receive;
     i > 143 ? max_to_receive = 200 : max_to_receive = 48;
@@ -227,8 +230,9 @@ int Mustang::effect_toggle(int state_index, int state)
     fprintf( stderr, "\n" );
 #endif
     ret = libusb_interrupt_transfer(amp_hand, 0x01, array, LENGTH, &received, TMOUT);
-    // flush reply data
-    for (int i=0; received; i++) {
+
+    // Note: Toggle gets three response packets
+    for (int i=0; i < 3; i++) {
         libusb_interrupt_transfer(amp_hand, 0x81, array, LENGTH, &received, TMOUT);
     }
 
@@ -416,7 +420,8 @@ int Mustang::load_memory_bank( int slot )
 
     ret = libusb_interrupt_transfer(amp_hand, 0x01, array, LENGTH, &received, TMOUT);
 
-    for(int i = 0; received; i++) {
+    // Mustang III has nine responses
+    for(int i=0; i < 9; i++) {
         libusb_interrupt_transfer(amp_hand, 0x81, array, LENGTH, &received, TMOUT);
         if(i < 7)
             memcpy(curr_state[i], array, LENGTH);
