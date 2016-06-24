@@ -56,7 +56,7 @@ as appropriate
 
 Both the amplifier and MIDI source should be connected first, then:
 ```
-$ mustang_midi _midi_port#_ _midi_listen_channel#_
+$ mustang_midi  midi_port#  midi_listen_channel#
 ```
 NOTE: RPi and BBG are a bit fussy about enumeration of new USB
 devices. If you are not getting proper communication, quit the program
