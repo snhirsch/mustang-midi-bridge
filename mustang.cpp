@@ -4,6 +4,7 @@
 
 #include "magic.h"
 #include "amp_defaults.h"
+#include "reverb_defaults.h"
 
 Mustang::Mustang()
 {
@@ -130,6 +131,7 @@ int Mustang::start_amp(void)
     for(j = 0; j < 7; i++, j++) memcpy(curr_state[j], received_data[i], LENGTH);
 
     updateAmp();
+    curr_reverb = new ReverbCC( this );
 
     return 0;
 }
@@ -209,6 +211,11 @@ void Mustang::updateAmp(void) {
         fprintf( stderr, "W - Amp id %x not supported yet\n", curr );
         break;
     }
+}
+
+
+void Mustang::updateReverb(void) {
+  // No-op for now
 }
 
 
@@ -379,6 +386,64 @@ int Mustang::setAmp( int ord ) {
     return ret;
 }
 
+int Mustang::setReverb( int ord ) {
+    int ret, received;
+    unsigned char scratch[LENGTH];
+    
+    unsigned char *array;
+
+    switch (ord) {
+    case 1:
+        array = small_hall;
+        break;
+    case 2:
+        array = large_hall;
+        break;
+    case 3:
+        array = small_room;
+        break;
+    case 4:
+        array = large_room;
+        break;
+    case 5:
+        array = small_plate;
+        break;
+    case 6:
+        array = large_plate;
+        break;
+    case 7:
+        array = ambient;
+        break;
+    case 8:
+        array = arena;
+        break;
+    case 9:
+        array = spring_63;
+        break;
+    case 10:
+        array = spring_65;
+        break;
+    default:
+        fprintf( stderr, "W - Reverb select %d not supported\n", ord );
+        return 0;
+    }
+
+    array[FXSLOT] = curr_state[REVERB_STATE][FXSLOT];
+
+    // Setup amp personality
+    ret = libusb_interrupt_transfer(amp_hand, 0x01, array, LENGTH, &received, TMOUT);
+    libusb_interrupt_transfer(amp_hand, 0x81, scratch, LENGTH, &received, TMOUT);
+
+    ret = libusb_interrupt_transfer(amp_hand, 0x01, execute, LENGTH, &received, TMOUT);
+    libusb_interrupt_transfer(amp_hand, 0x81, scratch, LENGTH, &received, TMOUT);
+
+    // Copy to current setting store
+    memcpy(curr_state[REVERB_STATE], array, LENGTH);
+    updateReverb();
+
+    return ret;
+}
+
 int Mustang::save_on_amp(char *name, int slot)
 {
     int ret, received;
@@ -405,6 +470,45 @@ int Mustang::save_on_amp(char *name, int slot)
 
     return ret;
 }
+
+int Mustang::efx_common1(int parm, int bucket, int type, int value)
+{
+    static unsigned short previous = 0;
+
+    int ret, received;
+    unsigned char array[LENGTH];
+    
+    memset(array, 0x00, LENGTH);
+    array[0] = 0x05;
+    array[1] = 0xc3;
+    array[2] = 0x06;
+    array[3] = curr_state[type][EFFECT];
+    // target parameter
+    array[5] = array[6] = parm;
+    // bucket 
+    array[7] = bucket;
+
+    // Scale and clamp to valid index range
+    int index = (int) ceil( (double)value * magic_scale_factor );
+    if ( index > magic_max ) index = magic_max;
+    
+    unsigned short eff_value = magic_values[index];
+
+    // Try to prevent extra traffic if successive calls resolve to the same
+    // slot.
+    if (eff_value == previous) return 0;
+    previous = eff_value;
+
+    array[9] = eff_value & 0xff;
+    array[10] = (eff_value >> 8) & 0xff;
+
+    // Send command and flush reply
+    ret = libusb_interrupt_transfer(amp_hand, 0x01, array, LENGTH, &received, TMOUT);
+    libusb_interrupt_transfer(amp_hand, 0x81, array, LENGTH, &received, TMOUT);
+
+    return ret;
+}
+
 
 int Mustang::load_memory_bank( int slot )
 {

@@ -7,11 +7,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <libusb-1.0/libusb.h>
-//#include <QtDebug>
 #include "effects_enum.h"
 #include "data_structs.h"
-//#include <time.h>
 #include "amp.h"
+#include "reverb.h"
 
 // amp's VID and PID
 #define USB_VID 0x1ed8
@@ -117,6 +116,18 @@
 #define BRIT_WATT_ID     0xff
 #define BRIT_COLOR_ID    0xfc
 
+// Reverb id values
+#define SM_HALL_ID       0x24
+#define LG_HALL_ID       0x3a
+#define SM_ROOM_ID       0x26
+#define LG_ROOM_ID       0x3b
+#define SM_PLATE_ID      0x4e
+#define LG_PLATE_ID      0x4b
+#define AMBIENT_ID       0x4c
+#define ARENA_ID         0x4d
+#define SPRING_63_ID     0x21
+#define SPRING_65_ID     0x0b
+
 class Mustang
 {
 public:
@@ -126,6 +137,9 @@ public:
     int stop_amp(void);    // terminate communication
     int set_effect(struct fx_pedal_settings);
     int setAmp( int ord );
+
+    int setReverb( int ord );
+
     int save_on_amp(char *, int);
     int load_memory_bank(int);
     int save_effects(int , char *, int , struct fx_pedal_settings *);
@@ -136,8 +150,11 @@ public:
     int control_common1(int parm, int bucket, int value);
     int control_common2(int parm, int bucket, int value);
 
-    AmpCC * getAmp( void ) { return curr_amp;}
+    int efx_common1(int parm, int bucket, int type, int value);
     
+    AmpCC * getAmp( void ) { return curr_amp;}
+    ReverbCC * getReverb( void ) { return curr_reverb;}
+
  private:
     libusb_device_handle *amp_hand;    // handle for USB communication
     unsigned char execute[LENGTH];    // "apply" command sent after each instruction
@@ -166,8 +183,11 @@ public:
     unsigned char curr_state[7][LENGTH];
     
     AmpCC * curr_amp;
-
+    ReverbCC * curr_reverb;
+    
     void updateAmp(void);
+    void updateReverb(void);
+
 };
 
 #endif // MUSTANG_H

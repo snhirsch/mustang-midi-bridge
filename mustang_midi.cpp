@@ -39,11 +39,12 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
     
   case 0xb0: {
     // Control change
-    int rc;
+    int rc = 0;
     int cc = (*message)[1];
     int value = (*message)[2];
     AmpCC *ampModel = mustang.getAmp();
-
+    ReverbCC *reverbModel = mustang.getReverb();
+    
     // Effects on/off
     if ( cc >= 23 && cc <= 26 ) {
       // Translate 23..26 --> 2..5 (current state index)
@@ -52,6 +53,30 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
       if      ( value >= 0 && value <= 63 )  state = 0;
       else if ( value > 63 && value <= 127 ) state = 1;
       rc = mustang.effect_toggle( index, state );
+    }
+    // Set reverb model
+    else if ( cc == 58 ) {
+      rc = mustang.setReverb( value );
+    }
+    // Level
+    else if ( cc == 59 ) {
+      rc = reverbModel->cc59( value );
+    }
+    // Decay
+    else if ( cc == 60 ) {
+      rc = reverbModel->cc60( value );
+    }
+    // Dwell
+    else if ( cc == 61 ) { 
+      rc = reverbModel->cc61( value );
+    }
+    // Diffusion
+    else if ( cc == 62 ) {
+      rc = reverbModel->cc62( value );
+    }
+    // Tone
+    else if ( cc == 63 ) {
+      rc = reverbModel->cc63( value );
     }
     // Set amp model
     else if ( cc == 68 ) {
