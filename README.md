@@ -26,6 +26,7 @@ implemented:
   + Patch change
   + EFX bypass (on/off)
   + Amp CC messages (except for on/off)
+  + Reverb CC messages
 
 I'm using WinPCAP and tshark to snoop communication and plan to
 implement all features accessible from the Fender FUSE application.
