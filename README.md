@@ -7,8 +7,7 @@ messages
 
 The intent is to implement the published MIDI spec for the Fender
 Mustang Floor pedal with whatever extensions are necessary to expose
-features added to the 'v2' series. Currently only patch change and
-effects on/off are implemented.
+features added to the 'v2' series. 
 
 I am developing on a Ubuntu Precise desktop machine, but the code is
 routinely tested on a Raspberry Pi 'B' and Beagelbone Green to ensure
@@ -18,6 +17,21 @@ recommending the BBG for real-world use.
 
 A special thanks to the original developer and contributors to 'PLUG',
 from whence the Mustang USB interface code is stolen.
+
+# Status
+
+Currently, the following elements of the Mustang Floor MIDI spec are
+implemented:
+
+  + Patch change
+  + EFX bypass (on/off)
+  + Amp CC messages (except for on/off)
+
+I'm using WinPCAP and tshark to snoop communication and plan to
+implement all features accessible from the Fender FUSE application.
+However, some targets listed in the MIDI spec (e.g. amplifier on/off,
+tuner mode) are not controllable from FUSE and it may take some time
+and luck to figure out the protocol.
 
 # Prerequisites
 
