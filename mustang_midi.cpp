@@ -42,90 +42,28 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
     int rc = 0;
     int cc = (*message)[1];
     int value = (*message)[2];
-    AmpCC *ampModel = mustang.getAmp();
-    ReverbCC *reverbModel = mustang.getReverb();
     
     // Effects on/off
     if ( cc >= 23 && cc <= 26 ) {
-      // Translate 23..26 --> 2..5 (current state index)
-      int index = cc - 21;
-      int state;
-      if      ( value >= 0 && value <= 63 )  state = 0;
-      else if ( value > 63 && value <= 127 ) state = 1;
-      rc = mustang.effect_toggle( index, state );
+      rc = mustang.effect_toggle( cc, value );
     }
     // Set reverb model
     else if ( cc == 58 ) {
       rc = mustang.setReverb( value );
     }
-    // Level
-    else if ( cc == 59 ) {
-      rc = reverbModel->cc59( value );
-    }
-    // Decay
-    else if ( cc == 60 ) {
-      rc = reverbModel->cc60( value );
-    }
-    // Dwell
-    else if ( cc == 61 ) { 
-      rc = reverbModel->cc61( value );
-    }
-    // Diffusion
-    else if ( cc == 62 ) {
-      rc = reverbModel->cc62( value );
-    }
-    // Tone
-    else if ( cc == 63 ) {
-      rc = reverbModel->cc63( value );
+    // Reverb CC handler
+    else if ( cc >= 59 && cc <= 63 ) {
+      ReverbCC *reverbModel = mustang.getReverb();
+      rc = reverbModel->dispatch( cc, value );
     }
     // Set amp model
     else if ( cc == 68 ) {
-      // fprintf( stderr, "DEBUG: %d\n", value );
       rc = mustang.setAmp( value );
     }
-    // Gain
-    else if ( cc == 69 ) {
-      rc = ampModel->cc69( value );
-    }
-    // Channel volume
-    else if ( cc == 70 ) {
-      rc = ampModel->cc70( value );
-    }
-    // Treble
-    else if ( cc == 71 ) { 
-      rc = ampModel->cc71( value );
-    }
-    // Mid
-    else if ( cc == 72 ) {
-      rc = ampModel->cc72( value );
-    }
-    // Bass
-    else if ( cc == 73 ) {
-      rc = ampModel->cc73( value );
-    }
-    // Sag
-    else if ( cc == 74 ) {
-      rc = ampModel->cc74( value );
-    }
-    // Bias
-    else if ( cc == 75 ) {
-      rc = ampModel->cc75( value );
-    }
-    // Noise Gate
-    else if ( cc == 76 ) {
-      rc = ampModel->cc76( value );
-    }
-    // Cabinet
-    else if ( cc == 77 ) {
-      rc = ampModel->cc77( value );
-    }
-    // Presence / Gain2 / Cut
-    else if ( cc == 78 ) {
-      rc = ampModel->cc78( value );
-    }
-    // Blend / Master Volume
-    else if ( cc == 79 ) {
-      rc = ampModel->cc79( value );
+    // Amp CC Handler
+    else if ( cc >= 69 && cc <= 79 ) {
+      AmpCC *ampModel = mustang.getAmp();
+      rc = ampModel->dispatch( cc, value );
     }
     if ( rc ) {
       fprintf( stderr, "Error: CC#%d failed. RC = %d\n", cc, rc );

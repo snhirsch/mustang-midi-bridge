@@ -219,10 +219,16 @@ void Mustang::updateReverb(void) {
 }
 
 
-int Mustang::effect_toggle(int state_index, int state)
+int Mustang::effect_toggle(int cc, int value)
 {
     int ret, received;
     unsigned char array[LENGTH];
+
+    // Translate 23..26 --> 2..5 (current state index)
+    int state_index = cc - 21;
+    int state;
+    if      ( value >= 0 && value <= 63 )  state = 1;
+    else if ( value > 63 && value <= 127 ) state = 0;
 
     memset(array, 0x00, LENGTH);
     array[0] = 0x19;
@@ -230,7 +236,7 @@ int Mustang::effect_toggle(int state_index, int state)
     // Translate DSP to family
     array[FAMILY] = curr_state[state_index][DSP] - 3;
     // Invert logic
-    array[ACTIVE_INVERT] = state > 0 ? 0 : 1;
+    array[ACTIVE_INVERT] = state;
     array[FXSLOT] = curr_state[state_index][FXSLOT];
 #if 0    
     for ( int i=0; i<15; i++ ) fprintf( stderr, "%02x ", array[i] );

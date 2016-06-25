@@ -8,13 +8,16 @@ class Mustang;
 class ReverbCC {
 
 protected:
-  
   Mustang * amp;
 
-public:
+  int efx_common1(int parm, int bucket, int type, int value);
 
+public:
   ReverbCC( Mustang * theAmp ) : amp(theAmp) {}
 
+  int dispatch( int cc, int value );
+
+private:
   // Level
   int cc59( int value );
   // Decay

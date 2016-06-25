@@ -128,8 +128,10 @@
 #define SPRING_63_ID     0x21
 #define SPRING_65_ID     0x0b
 
-class Mustang
-{
+class Mustang {
+  friend class AmpCC;
+  friend class ReverbCC;
+
 public:
     Mustang();
     ~Mustang();
@@ -144,14 +146,8 @@ public:
     int load_memory_bank(int);
     int save_effects(int , char *, int , struct fx_pedal_settings *);
 
-    // State:  1 = off, 0 = on
-    int effect_toggle(int category, int state);
+    int effect_toggle(int cc, int value);
 
-    int control_common1(int parm, int bucket, int value);
-    int control_common2(int parm, int bucket, int value);
-
-    int efx_common1(int parm, int bucket, int type, int value);
-    
     AmpCC * getAmp( void ) { return curr_amp;}
     ReverbCC * getReverb( void ) { return curr_reverb;}
 
@@ -185,9 +181,13 @@ public:
     AmpCC * curr_amp;
     ReverbCC * curr_reverb;
     
+    int control_common1(int parm, int bucket, int value);
+    int control_common2(int parm, int bucket, int value);
+
+    int efx_common1(int parm, int bucket, int type, int value);
+    
     void updateAmp(void);
     void updateReverb(void);
-
 };
 
 #endif // MUSTANG_H
