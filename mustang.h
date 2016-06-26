@@ -9,8 +9,6 @@
 #include <libusb-1.0/libusb.h>
 #include "effects_enum.h"
 #include "data_structs.h"
-#include "amp.h"
-#include "reverb.h"
 
 // amp's VID and PID
 #define USB_VID 0x1ed8
@@ -74,6 +72,9 @@
 #define FAMILY 2
 #define ACTIVE_INVERT 3
 
+// Offset to current device model for any state structure
+#define MODEL        16
+
 // Index into current state structure
 #define PRESET_NAME  0
 #define AMP_STATE    1
@@ -96,7 +97,7 @@
 #define DELAY_FAM    5
 #define REVERB_FAM   6
 
-// Amp id values
+// Amp model id values
 #define F57_DELUXE_ID    0x67
 #define F59_BASSMAN_ID   0x64
 #define F57_CHAMP_ID     0x7c
@@ -116,7 +117,7 @@
 #define BRIT_WATT_ID     0xff
 #define BRIT_COLOR_ID    0xfc
 
-// Reverb id values
+// Reverb model id values
 #define SM_HALL_ID       0x24
 #define LG_HALL_ID       0x3a
 #define SM_ROOM_ID       0x26
@@ -128,20 +129,39 @@
 #define SPRING_63_ID     0x21
 #define SPRING_65_ID     0x0b
 
-class Mustang {
-  friend class AmpCC;
-  friend class ReverbCC;
+// Delay model id values
+#define MONO_DLY_ID    0x16
+#define MONO_FILTER_ID 0x43
+#define ST_FILTER_ID   0x48
+#define MTAP_DLY_ID    0x44
+#define PONG_DLY_ID    0x45
+#define DUCK_DLY_ID    0x15
+#define REVERSE_DLY_ID 0x46
+#define TAPE_DLY_ID    0x2b
+#define ST_TAPE_DLY_ID 0x2a
 
+
+class AmpCC;
+class ReverbCC;
+class DelayCC;
+
+
+class Mustang {
+    friend class AmpCC;
+    friend class ReverbCC;
+    friend class DelayCC;
+    
 public:
     Mustang();
     ~Mustang();
     int start_amp(void);    // initialize communication
     int stop_amp(void);    // terminate communication
     int set_effect(struct fx_pedal_settings);
+
     int setAmp( int ord );
-
     int setReverb( int ord );
-
+    int setDelay( int ord );
+    
     int save_on_amp(char *, int);
     int load_memory_bank(int);
     int save_effects(int , char *, int , struct fx_pedal_settings *);
@@ -150,8 +170,18 @@ public:
 
     AmpCC * getAmp( void ) { return curr_amp;}
     ReverbCC * getReverb( void ) { return curr_reverb;}
+    DelayCC * getDelay( void ) { return curr_delay;}
 
- private:
+    struct Cmd {
+        int state_index;
+        int parm2;
+        int parm5;
+        int parm6;
+        int parm7;
+        int value;
+    };
+
+private:
     libusb_device_handle *amp_hand;    // handle for USB communication
     unsigned char execute[LENGTH];    // "apply" command sent after each instruction
 
@@ -180,14 +210,14 @@ public:
     
     AmpCC * curr_amp;
     ReverbCC * curr_reverb;
+    DelayCC * curr_delay;
     
-    int control_common1(int parm, int bucket, int value);
-    int control_common2(int parm, int bucket, int value);
+    int continuous_control( const Mustang::Cmd & cmd );
+    int discrete_control( const Mustang::Cmd & cmd );
 
-    int efx_common1(int parm, int bucket, int type, int value);
-    
-    void updateAmp(void);
-    void updateReverb(void);
+    void updateAmpObj(void);
+    void updateReverbObj(void);
+    void updateDelayObj(void);
 };
 
 #endif // MUSTANG_H

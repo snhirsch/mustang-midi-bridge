@@ -3,8 +3,16 @@
 #include "mustang.h"
 
 int 
-ReverbCC::efx_common1(int parm, int bucket, int type, int value) {
-  return amp->efx_common1( parm, bucket, type, value );
+ReverbCC::continuous_control( int parm5, int parm6, int parm7, int value ) {
+  Mustang::Cmd cmd;
+  cmd.state_index = REVERB_STATE;
+  cmd.parm2 = 0x06;
+  cmd.parm5 = parm5;
+  cmd.parm6 = parm6;
+  cmd.parm7 = parm7;
+  cmd.value = value;
+  
+  return amp->continuous_control( cmd );
 }
 
 int
@@ -39,26 +47,26 @@ ReverbCC::dispatch( int cc, int value ) {
 
 int 
 ReverbCC::cc59( int value ) {
-  return efx_common1( 0x00, 0x0b, REVERB_STATE, value );
+  return continuous_control( 0x00, 0x00, 0x0b, value );
 }
 
 int 
 ReverbCC::cc60( int value ) {
-  return efx_common1( 0x01, 0x0b, REVERB_STATE, value );
+  return continuous_control( 0x01, 0x01, 0x0b, value );
 }
 
 int 
 ReverbCC::cc61( int value ) {
-  return efx_common1( 0x02, 0x0b, REVERB_STATE, value );
+  return continuous_control( 0x02, 0x02, 0x0b, value );
 }
 
 int 
 ReverbCC::cc62( int value ) {
-  return efx_common1( 0x03, 0x0b, REVERB_STATE, value );
+  return continuous_control( 0x03, 0x03, 0x0b, value );
 }
 
 int 
 ReverbCC::cc63( int value ) {
-  return efx_common1( 0x04, 0x0b, REVERB_STATE, value );
+  return continuous_control( 0x04, 0x04, 0x0b, value );
 }
 

@@ -5,6 +5,11 @@
 
 #include "mustang.h"
 
+#include "amp.h"
+#include "reverb.h"
+#include "delay.h"
+
+
 static Mustang mustang;
 
 static int channel;
@@ -47,14 +52,23 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
     if ( cc >= 23 && cc <= 26 ) {
       rc = mustang.effect_toggle( cc, value );
     }
+    // Set delay model
+    else if ( cc == 48 ) {
+      rc = mustang.setDelay( value );
+    }
+    // Delay CC handler
+    else if ( cc >= 49 && cc <= 54 ) {
+      DelayCC *delayObj = mustang.getDelay();
+      rc = delayObj->dispatch( cc, value );
+    }
     // Set reverb model
     else if ( cc == 58 ) {
       rc = mustang.setReverb( value );
     }
     // Reverb CC handler
     else if ( cc >= 59 && cc <= 63 ) {
-      ReverbCC *reverbModel = mustang.getReverb();
-      rc = reverbModel->dispatch( cc, value );
+      ReverbCC *reverbObj = mustang.getReverb();
+      rc = reverbObj->dispatch( cc, value );
     }
     // Set amp model
     else if ( cc == 68 ) {
@@ -62,8 +76,8 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
     }
     // Amp CC Handler
     else if ( cc >= 69 && cc <= 79 ) {
-      AmpCC *ampModel = mustang.getAmp();
-      rc = ampModel->dispatch( cc, value );
+      AmpCC *ampObj = mustang.getAmp();
+      rc = ampObj->dispatch( cc, value );
     }
     if ( rc ) {
       fprintf( stderr, "Error: CC#%d failed. RC = %d\n", cc, rc );

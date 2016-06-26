@@ -3,13 +3,29 @@
 #include "mustang.h"
 
 int 
-AmpCC::control_common1( int parm, int bucket, int value ) {
-  return amp->control_common1( parm, bucket, value );
+AmpCC::continuous_control( int parm5, int parm6, int parm7, int value ) {
+  Mustang::Cmd cmd;
+  cmd.state_index = AMP_STATE;
+  cmd.parm2 = 0x02;
+  cmd.parm5 = parm5;
+  cmd.parm6 = parm6;
+  cmd.parm7 = parm7;
+  cmd.value = value;
+  
+  return amp->continuous_control( cmd );
 }
 
 int 
-AmpCC::control_common2( int parm, int bucket, int value ) {
-  return amp->control_common2( parm, bucket, value );
+AmpCC::discrete_control( int parm5, int parm6, int parm7, int value ) {
+  Mustang::Cmd cmd;
+  cmd.state_index = AMP_STATE;
+  cmd.parm2 = 0x02;
+  cmd.parm5 = parm5;
+  cmd.parm6 = parm6;
+  cmd.parm7 = parm7;
+  cmd.value = value;
+
+  return amp->discrete_control( cmd );
 }
 
 int
@@ -68,96 +84,96 @@ AmpCC::dispatch( int cc, int value ) {
 
 int 
 AmpCC::cc69( int value ) {
-  return control_common1( 0x01, 0x0c, value );
+  return continuous_control( 0x01, 0x01, 0x0c, value );
 }
 
 int 
 AmpCC::cc70( int value ) {
-  return control_common1( 0x00, 0x0c, value );
+  return continuous_control( 0x00, 0x00, 0x0c, value );
 }
 
 int 
 AmpCC::cc71( int value ) {
-  return control_common1( 0x04, 0x0c, value );
+  return continuous_control( 0x04, 0x04, 0x0c, value );
 }
 
 int 
 AmpCC::cc72( int value ) {
-  return control_common1( 0x05, 0x0c, value );
+  return continuous_control( 0x05, 0x05, 0x0c, value );
 }
 
 int 
 AmpCC::cc73( int value ) {
-  return control_common1( 0x06, 0x0c, value );
+  return continuous_control( 0x06, 0x06, 0x0c, value );
 }
 
 int 
 AmpCC::cc74( int value ) {
   if ( value > 2 ) return 0;
-  return control_common2( 0x13, 0x8f, value );
+  return discrete_control( 0x13, 0x13, 0x8f, value );
 }
 
 int 
 AmpCC::cc75( int value ) {
-  return control_common1( 0x0a, 0x0d, value );
+  return continuous_control( 0x0a, 0x0a, 0x0d, value );
 }
 
 int 
 AmpCC::cc76( int value ) {
   if ( value > 4 ) return 0;
-  return control_common2( 0x0f, 0x90, value );
+  return discrete_control( 0x0f, 0x0f, 0x90, value );
 }
 
 int 
 AmpCC::cc77( int value ) {
   if ( value < 1 || value > 12 ) return 0;
-  return control_common2( 0x11, 0x8e, value );
+  return discrete_control( 0x11, 0x11, 0x8e, value );
 }
 
 
 
 int 
 AmpCC1::cc78( int value ) {
-  return control_common1( 0x07, 0x0c, value );
+  return continuous_control( 0x07, 0x07, 0x0c, value );
 }
 
 int 
 AmpCC1::cc79( int value ) {
-  return control_common1( 0x02, 0x0c, value );
+  return continuous_control( 0x02, 0x02, 0x0c, value );
 }
   
 
 
 int 
 AmpCC2::cc78( int value ) {
-  return control_common1( 0x02, 0x0c, value );
+  return continuous_control( 0x02, 0x02, 0x0c, value );
 }
 
 int 
 AmpCC2::cc79( int value ) {
-  return control_common1( 0x03, 0x0c, value );
+  return continuous_control( 0x03, 0x03, 0x0c, value );
 }
 
   
 
 int 
 AmpCC3::cc78( int value ) {
-  return control_common1( 0x07, 0x0c, value );
+  return continuous_control( 0x07, 0x07, 0x0c, value );
 }
 
 int 
 AmpCC3::cc79( int value ) {
-  return control_common1( 0x03, 0x0c, value );
+  return continuous_control( 0x03, 0x03, 0x0c, value );
 }
   
 
 
 int 
 AmpCC4::cc78( int value ) {
-  return control_common1( 0x07, 0x0c, value );
+  return continuous_control( 0x07, 0x07, 0x0c, value );
 }
 
 int 
 AmpCC4::cc79( int value ) {
-  return control_common1( 0x03, 0x0c, value );
+  return continuous_control( 0x03, 0x03, 0x0c, value );
 }

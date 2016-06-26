@@ -18,8 +18,8 @@ protected:
 
   // Only base class is friend of Mustang, so forward calls from
   // derived classes through these methods.
-  int control_common1( int parm, int bucket, int value );
-  int control_common2( int parm, int bucket, int value );
+  int continuous_control( int parm5, int parm6, int parm7, int value );
+  int discrete_control( int parm5, int parm6, int parm7, int value );
 
 public:
   AmpCC( Mustang * theAmp ) : amp(theAmp) {}

@@ -3,8 +3,14 @@
 #include <cmath>
 
 #include "magic.h"
+
+#include "amp.h"
+#include "reverb.h"
+#include "delay.h"
+
 #include "amp_defaults.h"
 #include "reverb_defaults.h"
+#include "delay_defaults.h"
 
 Mustang::Mustang()
 {
@@ -130,9 +136,10 @@ int Mustang::start_amp(void)
     // Current preset name, amp settings, efx settings
     for(j = 0; j < 7; i++, j++) memcpy(curr_state[j], received_data[i], LENGTH);
 
-    updateAmp();
-    curr_reverb = new ReverbCC( this );
-
+    updateAmpObj();
+    updateReverbObj();
+    updateDelayObj();
+    
     return 0;
 }
 
@@ -166,9 +173,9 @@ int Mustang::stop_amp()
     return 0;
 }
 
-void Mustang::updateAmp(void) {
+void Mustang::updateAmpObj(void) {
 
-    int curr = curr_state[AMP_STATE][AMPLIFIER];
+    int curr = curr_state[AMP_STATE][MODEL];
     switch (curr) {
     case F57_DELUXE_ID:
     case F57_CHAMP_ID:
@@ -214,8 +221,62 @@ void Mustang::updateAmp(void) {
 }
 
 
-void Mustang::updateReverb(void) {
-  // No-op for now
+void Mustang::updateReverbObj(void) {
+    delete curr_reverb;
+    curr_reverb = new ReverbCC( this );
+}
+
+
+void Mustang::updateDelayObj(void) {
+
+    int curr = curr_state[DELAY_STATE][MODEL];
+
+    switch (curr) {
+    case MONO_DLY_ID:
+        delete curr_delay;
+        curr_delay = new MonoDelayCC(this);
+        break;
+    
+    case MONO_FILTER_ID:
+    case ST_FILTER_ID:
+        delete curr_delay;
+        curr_delay = new EchoFilterCC(this);
+        break;
+        
+    case MTAP_DLY_ID:
+        delete curr_delay;
+        curr_delay = new MultitapDelayCC(this);
+        break;
+        
+    case PONG_DLY_ID:
+        delete curr_delay;
+        curr_delay = new PingPongDelayCC(this);
+        break;
+        
+    case DUCK_DLY_ID:
+        delete curr_delay;
+        curr_delay = new DuckingDelayCC(this);
+        break;
+
+    case REVERSE_DLY_ID:
+        delete curr_delay;
+        curr_delay = new ReverseDelayCC(this);
+        break;
+        
+    case TAPE_DLY_ID:
+        delete curr_delay;
+        curr_delay = new TapeDelayCC(this);
+        break;
+        
+    case ST_TAPE_DLY_ID:
+        delete curr_delay;
+        curr_delay = new StereoTapeDelayCC(this);
+        break;
+        
+    default:
+        fprintf( stderr, "W - Delay id %x not supported yet\n", curr );
+        break;
+    }
 }
 
 
@@ -248,69 +309,6 @@ int Mustang::effect_toggle(int cc, int value)
     for (int i=0; i < 3; i++) {
         libusb_interrupt_transfer(amp_hand, 0x81, array, LENGTH, &received, TMOUT);
     }
-
-    return ret;
-}
-
-int Mustang::control_common1(int parm, int bucket, int value)
-{
-    static unsigned short previous = 0;
-
-    int ret, received;
-    unsigned char array[LENGTH];
-    
-    memset(array, 0x00, LENGTH);
-    array[0] = 0x05;
-    array[1] = 0xc3;
-    array[2] = 0x02;
-    array[3] = curr_state[AMP_STATE][AMPLIFIER];
-    // target parameter
-    array[5] = array[6] = parm;
-    // bucket 
-    array[7] = bucket;
-
-    // Scale and clamp to valid index range
-    int index = (int) ceil( (double)value * magic_scale_factor );
-    if ( index > magic_max ) index = magic_max;
-    
-    unsigned short eff_value = magic_values[index];
-
-    // Try to prevent extra traffic if successive calls resolve to the same
-    // slot.
-    if (eff_value == previous) return 0;
-    previous = eff_value;
-
-    array[9] = eff_value & 0xff;
-    array[10] = (eff_value >> 8) & 0xff;
-
-    // Send command and flush reply
-    ret = libusb_interrupt_transfer(amp_hand, 0x01, array, LENGTH, &received, TMOUT);
-    libusb_interrupt_transfer(amp_hand, 0x81, array, LENGTH, &received, TMOUT);
-
-    return ret;
-}
-
-
-int Mustang::control_common2(int parm, int bucket, int value)
-{
-    int ret, received;
-    unsigned char array[LENGTH];
-    
-    memset(array, 0x00, LENGTH);
-    array[0] = 0x05;
-    array[1] = 0xc3;
-    array[2] = 0x02;
-    array[3] = curr_state[AMP_STATE][AMPLIFIER];
-    // target parameter
-    array[5] = array[6] = parm;
-    // bucket 
-    array[7] = bucket;
-    // value
-    array[9] = value;
-    
-    // Send command and flush reply
-    ret = libusb_interrupt_transfer(amp_hand, 0x01, array, LENGTH, &received, TMOUT);
-    libusb_interrupt_transfer(amp_hand, 0x81, array, LENGTH, &received, TMOUT);
 
     return ret;
 }
@@ -372,7 +370,7 @@ int Mustang::setAmp( int ord ) {
 
     // Copy to current setting store
     memcpy(curr_state[AMP_STATE], array, LENGTH);
-    updateAmp();
+    updateAmpObj();
 
     // Setup USB gain
     memset(scratch, 0x00, LENGTH);
@@ -445,7 +443,62 @@ int Mustang::setReverb( int ord ) {
 
     // Copy to current setting store
     memcpy(curr_state[REVERB_STATE], array, LENGTH);
-    updateReverb();
+    updateReverbObj();
+
+    return ret;
+}
+
+int Mustang::setDelay( int ord ) {
+    int ret, received;
+    unsigned char scratch[LENGTH];
+    
+    unsigned char *array;
+
+    switch (ord) {
+    case 1:
+        array = mono_delay;
+        break;
+    case 2:
+        array = mono_echo_filter;
+        break;
+    case 3:
+        array = stereo_echo_filter;
+        break;
+    case 4:
+        array = multitap_delay;
+        break;
+    case 5:
+        array = ping_pong_delay;
+        break;
+    case 6:
+        array = ducking_delay;
+        break;
+    case 7:
+        array = reverse_delay;
+        break;
+    case 8:
+        array = tape_delay;
+        break;
+    case 9:
+        array = stereo_tape_delay;
+        break;
+    default:
+        fprintf( stderr, "W - Delay select %d not supported\n", ord );
+        return 0;
+    }
+
+    array[FXSLOT] = curr_state[DELAY_STATE][FXSLOT];
+
+    // Setup amp personality
+    ret = libusb_interrupt_transfer(amp_hand, 0x01, array, LENGTH, &received, TMOUT);
+    libusb_interrupt_transfer(amp_hand, 0x81, scratch, LENGTH, &received, TMOUT);
+
+    ret = libusb_interrupt_transfer(amp_hand, 0x01, execute, LENGTH, &received, TMOUT);
+    libusb_interrupt_transfer(amp_hand, 0x81, scratch, LENGTH, &received, TMOUT);
+
+    // Copy to current setting store
+    memcpy(curr_state[DELAY_STATE], array, LENGTH);
+    updateDelayObj();
 
     return ret;
 }
@@ -477,36 +530,54 @@ int Mustang::save_on_amp(char *name, int slot)
     return ret;
 }
 
-int Mustang::efx_common1(int parm, int bucket, int type, int value)
-{
-    static unsigned short previous = 0;
-
+int Mustang::continuous_control( const Mustang::Cmd & cmd ) {
     int ret, received;
     unsigned char array[LENGTH];
     
     memset(array, 0x00, LENGTH);
     array[0] = 0x05;
     array[1] = 0xc3;
-    array[2] = 0x06;
-    array[3] = curr_state[type][EFFECT];
-    // target parameter
-    array[5] = array[6] = parm;
-    // bucket 
-    array[7] = bucket;
+    array[2] = cmd.parm2;
+    array[3] = curr_state[cmd.state_index][MODEL];
 
+    // target parameter
+    array[5] = cmd.parm5;
+    array[6] = cmd.parm6;
+    array[7] = cmd.parm7;
+    
     // Scale and clamp to valid index range
-    int index = (int) ceil( (double)value * magic_scale_factor );
+    int index = (int) ceil( (double)cmd.value * magic_scale_factor );
     if ( index > magic_max ) index = magic_max;
     
     unsigned short eff_value = magic_values[index];
 
-    // Try to prevent extra traffic if successive calls resolve to the same
-    // slot.
-    if (eff_value == previous) return 0;
-    previous = eff_value;
-
     array[9] = eff_value & 0xff;
     array[10] = (eff_value >> 8) & 0xff;
+
+    // Send command and flush reply
+    ret = libusb_interrupt_transfer(amp_hand, 0x01, array, LENGTH, &received, TMOUT);
+    libusb_interrupt_transfer(amp_hand, 0x81, array, LENGTH, &received, TMOUT);
+
+    return ret;
+}
+
+
+int Mustang::discrete_control( const Mustang::Cmd & cmd ) {
+    int ret, received;
+    unsigned char array[LENGTH];
+    
+    memset(array, 0x00, LENGTH);
+    array[0] = 0x05;
+    array[1] = 0xc3;
+    array[2] = cmd.parm2;
+    array[3] = curr_state[cmd.state_index][MODEL];
+
+    array[5] = cmd.parm5;
+    array[6] = cmd.parm6;
+    array[7] = cmd.parm7;
+
+    // Discrete value
+    array[9] = cmd.value;
 
     // Send command and flush reply
     ret = libusb_interrupt_transfer(amp_hand, 0x01, array, LENGTH, &received, TMOUT);
@@ -536,7 +607,7 @@ int Mustang::load_memory_bank( int slot )
         if(i < 7)
             memcpy(curr_state[i], array, LENGTH);
     }
-    updateAmp();
+    updateAmpObj();
     
     return ret;
 }

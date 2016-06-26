@@ -10,7 +10,7 @@ class ReverbCC {
 protected:
   Mustang * amp;
 
-  int efx_common1(int parm, int bucket, int type, int value);
+  int continuous_control( int parm5, int parm6, int parm7, int value );
 
 public:
   ReverbCC( Mustang * theAmp ) : amp(theAmp) {}
