@@ -18,6 +18,17 @@ recommending the BBG for real-world use.
 A special thanks to the original developer and contributors to 'PLUG',
 from whence the Mustang USB interface code is stolen.
 
+## For the non-techies
+
+I have written a Wiki page here:
+
+https://github.com/snhirsch/mustang-midi-bridge/wiki/Install
+
+that attempts to walk less technical users through the installation
+and build process on Raspberry Pi or Beaglebone.  It's hard to know
+what level of detail to hit and suggestions or comments would be
+appreciated if I've omitted or glossed over something critical.
+
 # Status
 
 Currently, the following elements of the Mustang Floor MIDI spec are
