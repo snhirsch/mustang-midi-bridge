@@ -140,16 +140,41 @@
 #define TAPE_DLY_ID    0x2b
 #define ST_TAPE_DLY_ID 0x2a
 
+// Mod model id values
+#define SINE_CHORUS_ID 0x12
+#define TRI_CHORUS_ID  0x13
+#define SINE_FLANGE_ID 0x18
+#define TRI_FLANGE_ID  0x19
+#define VIBRATONE_ID   0x2d
+#define VINT_TREM_ID   0x40
+#define SINE_TREM_ID   0x41
+#define RING_MOD_ID    0x22
+#define STEP_FILT_ID   0x29
+#define PHASER_ID      0x4f
+#define PITCH_SHIFT_ID 0x1f
+
+// Stomp model id values
+#define OVERDRIVE_ID   0x3c
+#define WAH_ID         0x49
+#define TOUCH_WAH_ID   0x4a
+#define FUZZ_ID        0x1a
+#define FUZZ_TWAH_ID   0x1c
+#define SIMPLE_COMP_ID 0x88
+#define COMP_ID        0x07
+
 
 class AmpCC;
 class ReverbCC;
 class DelayCC;
-
+class ModCC;
+class StompCC;
 
 class Mustang {
     friend class AmpCC;
     friend class ReverbCC;
     friend class DelayCC;
+    friend class ModCC;
+    friend class StompCC;
     
 public:
     Mustang();
@@ -161,6 +186,10 @@ public:
     int setAmp( int ord );
     int setReverb( int ord );
     int setDelay( int ord );
+    int setMod( int ord );
+    int setStomp( int ord );
+
+    int tunerMode( int value );
     
     int save_on_amp(char *, int);
     int load_memory_bank(int);
@@ -171,6 +200,8 @@ public:
     AmpCC * getAmp( void ) { return curr_amp;}
     ReverbCC * getReverb( void ) { return curr_reverb;}
     DelayCC * getDelay( void ) { return curr_delay;}
+    ModCC * getMod( void ) { return curr_mod;}
+    StompCC * getStomp( void ) { return curr_stomp;}
 
     struct Cmd {
         int state_index;
@@ -207,17 +238,25 @@ private:
     // 6 : Expression Pedal
     //
     unsigned char curr_state[7][LENGTH];
-    
+
+    bool tuner_active;
+
     AmpCC * curr_amp;
     ReverbCC * curr_reverb;
     DelayCC * curr_delay;
+    ModCC * curr_mod;
+    StompCC * curr_stomp;
     
     int continuous_control( const Mustang::Cmd & cmd );
     int discrete_control( const Mustang::Cmd & cmd );
 
+    void handle_parm_dump(void);
+
     void updateAmpObj(void);
     void updateReverbObj(void);
     void updateDelayObj(void);
+    void updateModObj(void);
+    void updateStompObj(void);
 };
 
 #endif // MUSTANG_H

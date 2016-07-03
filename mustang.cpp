@@ -7,16 +7,21 @@
 #include "amp.h"
 #include "reverb.h"
 #include "delay.h"
+#include "mod.h"
+#include "stomp.h"
 
 #include "amp_defaults.h"
 #include "reverb_defaults.h"
 #include "delay_defaults.h"
+#include "mod_defaults.h"
+#include "stomp_defaults.h"
 
 Mustang::Mustang()
 {
     amp_hand = NULL;
     curr_amp = NULL;
-
+    tuner_active = false;
+    
     // "apply efect" command
     memset(execute, 0x00, LENGTH);
     execute[0] = 0x1c;
@@ -42,8 +47,6 @@ int Mustang::start_amp(void)
 {
     int ret, received;
     unsigned char array[LENGTH];
-    unsigned char received_data[296][LENGTH], data[7][LENGTH];
-    memset(received_data, 0x00, 296*LENGTH);
 
     if(amp_hand == NULL)
     {
@@ -107,8 +110,6 @@ int Mustang::start_amp(void)
     libusb_interrupt_transfer(amp_hand, 0x01, array, LENGTH, &received, TMOUT);
     libusb_interrupt_transfer(amp_hand, 0x81, array, LENGTH, &received, TMOUT);
 
-    int i = 0, j = 0;
-
     memset(array, 0x00, LENGTH);
     array[0] = 0xff;
     array[1] = 0xc1;
@@ -116,6 +117,20 @@ int Mustang::start_amp(void)
     // Request parameter dump from amplifier
     libusb_interrupt_transfer(amp_hand, 0x01, array, LENGTH, &received, TMOUT);
     
+    handle_parm_dump();
+    
+    return 0;
+}
+
+void Mustang::handle_parm_dump()
+{
+    int ret, received;
+    unsigned char array[LENGTH];
+    unsigned char received_data[296][LENGTH], data[7][LENGTH];
+    memset(received_data, 0x00, 296*LENGTH);
+
+    int i = 0, j = 0;
+
     // Count probably varies by model. Brute-force flush appears to create problems
     // so we'll need to get this right case by case.
     for(i = 0; i < 210; i++)
@@ -139,9 +154,10 @@ int Mustang::start_amp(void)
     updateAmpObj();
     updateReverbObj();
     updateDelayObj();
-    
-    return 0;
+    updateModObj();
+    updateStompObj();
 }
+
 
 int Mustang::stop_amp()
 {
@@ -173,10 +189,51 @@ int Mustang::stop_amp()
     return 0;
 }
 
+int Mustang::tunerMode( int value )
+{
+    int ret, received;
+    unsigned char array[LENGTH];
+    memset(array, 0x00, LENGTH);
+
+    array[0] = 0x0a;
+    array[1] = 0x01;
+
+    // This is a bit odd.  When turning ON the tuner, the amp responds
+    // with a complete parameter dump reflecting all null devices
+    // (basically useless).  When turning it off, we get only a single
+    // response message.
+    //
+    if ( value > 63 && value <= 127 ) {
+        // Tuner on
+        array[2] = array[3] = array[4] = 0x01;
+        ret = libusb_interrupt_transfer(amp_hand, 0x01, array, LENGTH, &received, TMOUT);
+
+        int i = 0;
+        for(i = 0; i < 210; i++) {
+            int rc = libusb_interrupt_transfer(amp_hand, 0x81, array, LENGTH, &received, TMOUT);
+            if (rc) fprintf( stderr, "DEBUG: Timeout. i = %d, rc = %d\n", i, rc );
+        }
+        tuner_active = true;
+    }
+    else if ( value >= 0 && value <= 63 ) {
+        // Tuner off
+        ret = libusb_interrupt_transfer(amp_hand, 0x01, array, LENGTH, &received, TMOUT);
+        libusb_interrupt_transfer(amp_hand, 0x81, array, LENGTH, &received, TMOUT);
+        sleep( 1 );
+        tuner_active = false;
+    }
+
+    return ret;
+}
+
+
 void Mustang::updateAmpObj(void) {
 
     int curr = curr_state[AMP_STATE][MODEL];
     switch (curr) {
+    case 0:
+        break;
+
     case F57_DELUXE_ID:
     case F57_CHAMP_ID:
     case F65_DELUXE_ID:
@@ -222,8 +279,18 @@ void Mustang::updateAmpObj(void) {
 
 
 void Mustang::updateReverbObj(void) {
-    delete curr_reverb;
-    curr_reverb = new ReverbCC( this );
+
+    int curr = curr_state[REVERB_STATE][MODEL];
+    
+    switch (curr) {
+    case 0:
+        break;
+
+    default:
+        delete curr_reverb;
+        curr_reverb = new ReverbCC( this );
+        break;
+    }
 }
 
 
@@ -232,6 +299,9 @@ void Mustang::updateDelayObj(void) {
     int curr = curr_state[DELAY_STATE][MODEL];
 
     switch (curr) {
+    case 0:
+        break;
+        
     case MONO_DLY_ID:
         delete curr_delay;
         curr_delay = new MonoDelayCC(this);
@@ -280,8 +350,114 @@ void Mustang::updateDelayObj(void) {
 }
 
 
+void Mustang::updateModObj(void) {
+
+    int curr = curr_state[MOD_STATE][MODEL];
+
+    switch (curr) {
+    case 0:
+        break;
+        
+    case SINE_CHORUS_ID:
+    case TRI_CHORUS_ID:
+        delete curr_mod;
+        curr_mod = new ChorusCC(this);
+        break;
+    
+    case SINE_FLANGE_ID:
+    case TRI_FLANGE_ID:
+        delete curr_mod;
+        curr_mod = new FlangerCC(this);
+        break;
+        
+    case VIBRATONE_ID:
+        delete curr_mod;
+        curr_mod = new VibratoneCC(this);
+        break;
+        
+    case VINT_TREM_ID:
+    case SINE_TREM_ID:
+        delete curr_mod;
+        curr_mod = new TremCC(this);
+        break;
+        
+    case RING_MOD_ID:
+        delete curr_mod;
+        curr_mod = new RingModCC(this);
+        break;
+
+    case STEP_FILT_ID:
+        delete curr_mod;
+        curr_mod = new StepFilterCC(this);
+        break;
+        
+    case PHASER_ID:
+        delete curr_mod;
+        curr_mod = new PhaserCC(this);
+        break;
+        
+    case PITCH_SHIFT_ID:
+        delete curr_mod;
+        curr_mod = new PitchShifterCC(this);
+        break;
+        
+    default:
+        fprintf( stderr, "W - Mod id %x not supported yet\n", curr );
+        break;
+    }
+}
+
+
+void Mustang::updateStompObj(void) {
+
+    int curr = curr_state[STOMP_STATE][MODEL];
+
+    switch (curr) {
+    case 0:
+        break;
+        
+    case OVERDRIVE_ID:
+        delete curr_stomp;
+        curr_stomp = new OverdriveCC(this);
+        break;
+    
+    case WAH_ID:
+    case TOUCH_WAH_ID:
+        delete curr_stomp;
+        curr_stomp = new WahCC(this);
+        break;
+        
+    case FUZZ_ID:
+        delete curr_stomp;
+        curr_stomp = new FuzzCC(this);
+        break;
+        
+    case FUZZ_TWAH_ID:
+        delete curr_stomp;
+        curr_stomp = new FuzzTouchWahCC(this);
+        break;
+        
+    case SIMPLE_COMP_ID:
+        delete curr_stomp;
+        curr_stomp = new SimpleCompCC(this);
+        break;
+
+    case COMP_ID:
+        delete curr_stomp;
+        curr_stomp = new CompCC(this);
+        break;
+        
+    default:
+        fprintf( stderr, "W - Stomp id %x not supported yet\n", curr );
+        break;
+    }
+}
+
+
 int Mustang::effect_toggle(int cc, int value)
 {
+    if ( tuner_active ) return 0;
+
     int ret, received;
     unsigned char array[LENGTH];
 
@@ -314,12 +490,17 @@ int Mustang::effect_toggle(int cc, int value)
 }
 
 int Mustang::setAmp( int ord ) {
+    if ( tuner_active ) return 0;
+
     int ret, received;
     unsigned char scratch[LENGTH];
     
     unsigned char *array;
 
     switch (ord) {
+    case 0:
+        array = amp_none;
+        break;
     case 1:
         array = f57_deluxe;
         break;
@@ -373,30 +554,35 @@ int Mustang::setAmp( int ord ) {
     updateAmpObj();
 
     // Setup USB gain
-    memset(scratch, 0x00, LENGTH);
-    scratch[0] = 0x1c;
-    scratch[1] = 0x03;
-    scratch[2] = 0x0d;
-    scratch[6] = 0x01;
-    scratch[7] = 0x01;
-    scratch[16] = 0x80;
+    // memset(scratch, 0x00, LENGTH);
+    // scratch[0] = 0x1c;
+    // scratch[1] = 0x03;
+    // scratch[2] = 0x0d;
+    // scratch[6] = 0x01;
+    // scratch[7] = 0x01;
+    // scratch[16] = 0x80;
 
-    ret = libusb_interrupt_transfer(amp_hand, 0x01, scratch, LENGTH, &received, TMOUT);
-    libusb_interrupt_transfer(amp_hand, 0x81, scratch, LENGTH, &received, TMOUT);
+    // ret = libusb_interrupt_transfer(amp_hand, 0x01, scratch, LENGTH, &received, TMOUT);
+    // libusb_interrupt_transfer(amp_hand, 0x81, scratch, LENGTH, &received, TMOUT);
 
-    ret = libusb_interrupt_transfer(amp_hand, 0x01, execute, LENGTH, &received, TMOUT);
-    libusb_interrupt_transfer(amp_hand, 0x81, scratch, LENGTH, &received, TMOUT);
+    // ret = libusb_interrupt_transfer(amp_hand, 0x01, execute, LENGTH, &received, TMOUT);
+    // libusb_interrupt_transfer(amp_hand, 0x81, scratch, LENGTH, &received, TMOUT);
 
     return ret;
 }
 
 int Mustang::setReverb( int ord ) {
+    if ( tuner_active ) return 0;
+
     int ret, received;
     unsigned char scratch[LENGTH];
     
     unsigned char *array;
 
     switch (ord) {
+    case 0:
+        array = reverb_none;
+        break;
     case 1:
         array = small_hall;
         break;
@@ -449,12 +635,17 @@ int Mustang::setReverb( int ord ) {
 }
 
 int Mustang::setDelay( int ord ) {
+    if ( tuner_active ) return 0;
+
     int ret, received;
     unsigned char scratch[LENGTH];
     
     unsigned char *array;
 
     switch (ord) {
+    case 0:
+        array = delay_none;
+        break;
     case 1:
         array = mono_delay;
         break;
@@ -503,8 +694,130 @@ int Mustang::setDelay( int ord ) {
     return ret;
 }
 
+int Mustang::setMod( int ord ) {
+    if ( tuner_active ) return 0;
+
+    int ret, received;
+    unsigned char scratch[LENGTH];
+    
+    unsigned char *array;
+
+    switch (ord) {
+    case 0:
+        array = mod_none;
+        break;
+    case 1:
+        array = sine_chorus;
+        break;
+    case 2:
+        array = triangle_chorus;
+        break;
+    case 3:
+        array = sine_flanger;
+        break;
+    case 4:
+        array = triangle_flanger;
+        break;
+    case 5:
+        array = vibratone;
+        break;
+    case 6:
+        array = vintage_tremolo;
+        break;
+    case 7:
+        array = sine_tremolo;
+        break;
+    case 8:
+        array = ring_modulator;
+        break;
+    case 9:
+        array = step_filter;
+        break;
+    case 10:
+        array = phaser;
+        break;
+    case 11:
+        array = pitch_shifter;
+        break;
+    default:
+        fprintf( stderr, "W - Mod select %d not supported\n", ord );
+        return 0;
+    }
+
+    array[FXSLOT] = curr_state[MOD_STATE][FXSLOT];
+
+    // Setup amp personality
+    ret = libusb_interrupt_transfer(amp_hand, 0x01, array, LENGTH, &received, TMOUT);
+    libusb_interrupt_transfer(amp_hand, 0x81, scratch, LENGTH, &received, TMOUT);
+
+    ret = libusb_interrupt_transfer(amp_hand, 0x01, execute, LENGTH, &received, TMOUT);
+    libusb_interrupt_transfer(amp_hand, 0x81, scratch, LENGTH, &received, TMOUT);
+
+    // Copy to current setting store
+    memcpy(curr_state[MOD_STATE], array, LENGTH);
+    updateModObj();
+
+    return ret;
+}
+
+int Mustang::setStomp( int ord ) {
+    if ( tuner_active ) return 0;
+
+    int ret, received;
+    unsigned char scratch[LENGTH];
+    
+    unsigned char *array;
+
+    switch (ord) {
+    case 0:
+        array = stomp_none;
+        break;
+    case 1:
+        array = overdrive;
+        break;
+    case 2:
+        array = wah;
+        break;
+    case 3:
+        array = touch_wah;
+        break;
+    case 4:
+        array = fuzz;
+        break;
+    case 5:
+        array = fuzz_touch_wah;
+        break;
+    case 6:
+        array = simple_comp;
+        break;
+    case 7:
+        array = compressor;
+        break;
+    default:
+        fprintf( stderr, "W - Stomp select %d not supported\n", ord );
+        return 0;
+    }
+
+    array[FXSLOT] = curr_state[STOMP_STATE][FXSLOT];
+
+    // Setup amp personality
+    ret = libusb_interrupt_transfer(amp_hand, 0x01, array, LENGTH, &received, TMOUT);
+    libusb_interrupt_transfer(amp_hand, 0x81, scratch, LENGTH, &received, TMOUT);
+
+    ret = libusb_interrupt_transfer(amp_hand, 0x01, execute, LENGTH, &received, TMOUT);
+    libusb_interrupt_transfer(amp_hand, 0x81, scratch, LENGTH, &received, TMOUT);
+
+    // Copy to current setting store
+    memcpy(curr_state[STOMP_STATE], array, LENGTH);
+    updateStompObj();
+
+    return ret;
+}
+
 int Mustang::save_on_amp(char *name, int slot)
 {
+    if ( tuner_active ) return 0;
+
     int ret, received;
     unsigned char array[LENGTH];
 
@@ -531,6 +844,8 @@ int Mustang::save_on_amp(char *name, int slot)
 }
 
 int Mustang::continuous_control( const Mustang::Cmd & cmd ) {
+    if ( tuner_active ) return 0;
+
     int ret, received;
     unsigned char array[LENGTH];
     
@@ -563,6 +878,8 @@ int Mustang::continuous_control( const Mustang::Cmd & cmd ) {
 
 
 int Mustang::discrete_control( const Mustang::Cmd & cmd ) {
+    if ( tuner_active ) return 0;
+
     int ret, received;
     unsigned char array[LENGTH];
     
@@ -589,6 +906,8 @@ int Mustang::discrete_control( const Mustang::Cmd & cmd ) {
 
 int Mustang::load_memory_bank( int slot )
 {
+    if ( tuner_active ) return 0;
+
     int ret, received;
     unsigned char array[LENGTH], data[7][LENGTH];
 
@@ -604,10 +923,15 @@ int Mustang::load_memory_bank( int slot )
     // Mustang III has nine responses
     for(int i=0; i < 9; i++) {
         libusb_interrupt_transfer(amp_hand, 0x81, array, LENGTH, &received, TMOUT);
-        if(i < 7)
-            memcpy(curr_state[i], array, LENGTH);
+        int dsp = array[2];
+        if ( dsp >= 4 && dsp <= 9 )
+            memcpy(curr_state[dsp - 4], array, LENGTH);
     }
     updateAmpObj();
+    updateReverbObj();
+    updateDelayObj();
+    updateModObj();
+    updateStompObj();
     
     return ret;
 }

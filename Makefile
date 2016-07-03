@@ -21,7 +21,7 @@ $(BIN): $(OBJ)
 	$(CXX) $^ -o $@ $(LDLIBS)
 
 clean: 
-	rm -f $(DEP) $(OBJ) $(BIN)
+	rm -f $(DEP) $(OBJ) $(BIN) *~
 
 -include $(SRC:.cpp=.d)
 

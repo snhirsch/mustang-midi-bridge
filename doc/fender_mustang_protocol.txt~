@@ -147,7 +147,7 @@ Data format for setting an effect is:
    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
 00 | 1c| 03|DSP|     00    | 01| 01|               00              |
    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
-16 |fxm| 00|slt| ??| ??| ??|en |               00                  |
+16 |fxm| 00|slt| ??| ??| ??|                   00                  |
    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
 32 |kb1|kb2|kb3|kb4|kb5|kb6|                   00                  |
    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
@@ -160,7 +160,6 @@ slt - slot; before amp have numbers from 0 to 3, after from 4 to 7
       kb1, kb2, kb3, kb4, kb5, kb6 - knobs values; not every time 
       all are used; maximum value of the knob depends on the effect
 ?? - some strange numbers specific for each effect
-en - Effect state (1 = off, 0 = on)
 
 If you want to remove the effect send normal effect-setting packet but
 set "effect model" and knobs fields to zeros.  I haven't tried what

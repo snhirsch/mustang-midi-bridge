@@ -45,28 +45,3 @@ ReverbCC::dispatch( int cc, int value ) {
   }
 }
 
-int 
-ReverbCC::cc59( int value ) {
-  return continuous_control( 0x00, 0x00, 0x0b, value );
-}
-
-int 
-ReverbCC::cc60( int value ) {
-  return continuous_control( 0x01, 0x01, 0x0b, value );
-}
-
-int 
-ReverbCC::cc61( int value ) {
-  return continuous_control( 0x02, 0x02, 0x0b, value );
-}
-
-int 
-ReverbCC::cc62( int value ) {
-  return continuous_control( 0x03, 0x03, 0x0b, value );
-}
-
-int 
-ReverbCC::cc63( int value ) {
-  return continuous_control( 0x04, 0x04, 0x0b, value );
-}
-

@@ -8,7 +8,8 @@
 #include "amp.h"
 #include "reverb.h"
 #include "delay.h"
-
+#include "mod.h"
+#include "stomp.h"
 
 static Mustang mustang;
 
@@ -48,9 +49,44 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
     int cc = (*message)[1];
     int value = (*message)[2];
     
+    // Tuner toggle
+    if ( cc == 20 ) {
+      rc = mustang.tunerMode( value );
+    }
+    // All EFX toggle
+    else if ( cc == 22 ) {
+      rc = mustang.effect_toggle( 23, value );
+      if ( rc == 0 ) {
+        rc = mustang.effect_toggle( 24, value );
+        if ( rc == 0 ) {
+          rc = mustang.effect_toggle( 25, value );
+          if ( rc == 0 ) {
+            rc = mustang.effect_toggle( 26, value );
+          }
+        }
+      }
+    }
     // Effects on/off
-    if ( cc >= 23 && cc <= 26 ) {
+    else if ( cc >= 23 && cc <= 26 ) {
       rc = mustang.effect_toggle( cc, value );
+    }
+    // Set stomp model
+    else if ( cc == 28 ) {
+      rc = mustang.setStomp( value );
+    }
+    // Stomp CC handler
+    else if ( cc >= 29 && cc <= 33 ) {
+      StompCC *stompObj = mustang.getStomp();
+      rc = stompObj->dispatch( cc, value );
+    }
+    // Set mod model
+    else if ( cc == 38 ) {
+      rc = mustang.setStomp( value );
+    }
+    // Mod CC handler
+    else if ( cc >= 39 && cc <= 43 ) {
+      StompCC *modObj = mustang.getStomp();
+      rc = modObj->dispatch( cc, value );
     }
     // Set delay model
     else if ( cc == 48 ) {

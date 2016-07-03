@@ -28,23 +28,32 @@ public:
 
 private:
   // Gain
-  virtual int cc69( int value );
+  virtual int cc69( int value ) { return continuous_control( 0x01, 0x01, 0x0c, value );}
   // Ch. Volume
-  virtual int cc70( int value );
+  virtual int cc70( int value ) { return continuous_control( 0x00, 0x00, 0x0c, value );}
   // Treble
-  virtual int cc71( int value );
+  virtual int cc71( int value ) { return continuous_control( 0x04, 0x04, 0x0c, value );}
   // Mid
-  virtual int cc72( int value );
+  virtual int cc72( int value ) { return continuous_control( 0x05, 0x05, 0x0c, value );}
   // Bass
-  virtual int cc73( int value );
+  virtual int cc73( int value ) { return continuous_control( 0x06, 0x06, 0x0c, value );}
   // Sag
-  virtual int cc74( int value );
+  virtual int cc74( int value ) { 
+    if ( value > 2 ) return 0;
+    else             return discrete_control( 0x13, 0x13, 0x8f, value );
+  }
   // Bias
-  virtual int cc75( int value );
+  virtual int cc75( int value ) { return continuous_control( 0x0a, 0x0a, 0x0d, value );}
   // Noise Gate
-  virtual int cc76( int value );
+  virtual int cc76( int value ) { 
+    if ( value > 4 ) return 0;
+    else             return discrete_control( 0x0f, 0x0f, 0x90, value );
+  }
   // Cabinet
-  virtual int cc77( int value );
+  virtual int cc77( int value ) {
+    if ( value < 1 || value > 12 ) return 0;
+    else                           return discrete_control( 0x11, 0x11, 0x8e, value );
+  }
 
   // Dummy in base class
   virtual int cc78( int value ) { return 0;}
@@ -60,9 +69,9 @@ public:
   AmpCC1( Mustang * theAmp ) : AmpCC(theAmp) {}
 private:
   // Presence
-  virtual int cc78( int value );
+  virtual int cc78( int value ) { return continuous_control( 0x07, 0x07, 0x0c, value );}
   // Blend
-  virtual int cc79( int value );
+  virtual int cc79( int value ) { return continuous_control( 0x02, 0x02, 0x0c, value );}
 };
   
 
@@ -73,9 +82,9 @@ public:
   AmpCC2( Mustang * theAmp ) : AmpCC(theAmp) {}
 private:
   // Gain2
-  virtual int cc78( int value );
+  virtual int cc78( int value ) { return continuous_control( 0x02, 0x02, 0x0c, value );}
   // Master Volume
-  virtual int cc79( int value );
+  virtual int cc79( int value ) { return continuous_control( 0x03, 0x03, 0x0c, value );}
 };
   
 
@@ -86,9 +95,9 @@ public:
   AmpCC3( Mustang * theAmp ) : AmpCC(theAmp) {}
 private:
   // Cut
-  virtual int cc78( int value );
+  virtual int cc78( int value ) { return continuous_control( 0x07, 0x07, 0x0c, value );}
   // Master Volume
-  virtual int cc79( int value );
+  virtual int cc79( int value ) { return continuous_control( 0x03, 0x03, 0x0c, value );}
 };
   
 
@@ -101,9 +110,9 @@ public:
   AmpCC4( Mustang * theAmp ) : AmpCC(theAmp) {}
 private:
   // Presence
-  virtual int cc78( int value );
+  virtual int cc78( int value ) { return continuous_control( 0x07, 0x07, 0x0c, value );}
   // Master Volume
-  virtual int cc79( int value );
+  virtual int cc79( int value ) { return continuous_control( 0x03, 0x03, 0x0c, value );}
 };
   
 
@@ -113,6 +122,26 @@ class AmpCC5 : public AmpCC {
 public:
   AmpCC5( Mustang * theAmp ) : AmpCC(theAmp) {}
 private:
+  virtual int cc78( int value ) { return 0;}
+  virtual int cc79( int value ) { return 0;}
+};
+  
+
+// Null Amp
+//
+class NullAmpCC : public AmpCC {
+public:
+  NullAmpCC( Mustang * theAmp ) : AmpCC(theAmp) {}
+private:
+  virtual int cc69( int value ) { return 0;}
+  virtual int cc70( int value ) { return 0;}
+  virtual int cc71( int value ) { return 0;}
+  virtual int cc72( int value ) { return 0;}
+  virtual int cc73( int value ) { return 0;}
+  virtual int cc74( int value ) { return 0;}
+  virtual int cc75( int value ) { return 0;}
+  virtual int cc76( int value ) { return 0;}
+  virtual int cc77( int value ) { return 0;}
   virtual int cc78( int value ) { return 0;}
   virtual int cc79( int value ) { return 0;}
 };
