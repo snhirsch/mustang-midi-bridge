@@ -81,11 +81,11 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
     }
     // Set mod model
     else if ( cc == 38 ) {
-      rc = mustang.setStomp( value );
+      rc = mustang.setMod( value );
     }
     // Mod CC handler
     else if ( cc >= 39 && cc <= 43 ) {
-      StompCC *modObj = mustang.getStomp();
+      ModCC *modObj = mustang.getMod();
       rc = modObj->dispatch( cc, value );
     }
     // Set delay model
