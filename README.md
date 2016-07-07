@@ -31,16 +31,37 @@ appreciated if I've omitted or glossed over something critical.
 
 # Status
 
-Currently, the following elements of the Mustang Floor MIDI spec are
-implemented:
+The Mustang Floor MIDI spec is about 99% implemented, with only the
+following exceptions:
 
-  + Patch change
-  + EFX bypass (on/off)
-  + Amp CC messages (except for on/off)
-  + Reverb CC messages
-  + Delay CC messages
+  + Tuner On/Off
 
-I'm using WinPCAP and tshark to snoop communication and plan to
+    Will require substantial rework of the program to make this work
+    reliably.  
+
+  + Amp Bypass
+
+    It's possible to turn the amp "off" with CC#68 0, but this mutes
+    all sound rather than acting as a bypass.  I don't think the combo
+    amps support signal bypass, but haven't given up yet.
+
+  + Pedal Volume
+
+    I'm not sure why this is needed, since all continuous controllers
+    are directly accessible through CC messages.  Since the FUSE
+    application cannot issue these commands it will be guesswork to
+    figure out the protocol - if it's even supported on the combo
+    amps. 
+
+  + FX Insert
+
+    Not supported on the combo amps
+
+  + Tap Tempo
+
+    If I can figure out how to do this from FUSE I can code it.
+  
+I'm using USBPcap and tshark to snoop communication and plan to
 implement all features accessible from the Fender FUSE application.
 However, some targets listed in the MIDI spec (e.g. amplifier on/off,
 tuner mode) are not controllable from FUSE and it may take some time
