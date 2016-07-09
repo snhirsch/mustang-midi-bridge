@@ -1,0 +1,72 @@
+#!/usr/bin/python
+
+import os
+from os.path import expanduser
+from pwd import getpwnam
+from grp import getgrnam
+
+import glob
+import syslog
+from string import split
+
+import usb.core
+
+####### Start User Edits #########
+
+# Controller USB parms
+control_vid = 0x0763
+control_pid = 0x0160
+
+# Mustang USB parms
+mustang_vid = 0x1ed8
+mustang_pid = 0x0016
+
+# Controller MIDI device
+midi_device = 2
+
+# MIDI listen channel
+midi_channel = 1
+
+######## End User Edits ##########
+
+rundir = "/var/run/mustang/"
+
+# Look for devices
+controller = usb.core.find( idVendor=control_vid, idProduct=control_pid )
+mustang = usb.core.find( idVendor=mustang_vid, idProduct=mustang_pid )
+
+pid = os.getpid()
+# syslog.syslog( "%d: Starting" % pid )
+
+# was it found?
+if controller and mustang:
+    os.chdir( rundir )
+    filelist = glob.glob( 'mustang_*' )
+
+    if len( filelist ) == 1:
+        lockfile = filelist[0]
+        oldpid = split( lockfile, '_' )[1]
+
+        # syslog.syslog( "%d: Check for path /proc/%s" % (pid, oldpid) )
+        if not os.path.exists( "/proc/%s" % oldpid ):
+            # No such process, ok to start ours
+            # syslog.syslog( "%d: Renaming %s to mustang_%d" % (pid, lockfile, pid) )
+            try:
+                os.rename( lockfile, "mustang_%d" % os.getpid() ) 
+            except Exception, e:
+                pass
+                # syslog.syslog( "%d: Unable to rename file" % pid )
+            else:
+                # syslog.syslog( "%d: About to exec" % pid )
+                # Drop privileges and start the program
+                pwObj = getpwnam('mustang-user')
+                os.setgid( pwObj.pw_gid )
+                
+                # Need secondary groups to access MIDI and USB devices
+                sec_gids = ( getgrnam('plugdev').gr_gid, getgrnam('audio').gr_gid )
+                os.setgroups( sec_gids )
+                
+                os.setuid( pwObj.pw_uid )
+                os.execl( "/usr/local/bin/mustang_midi", "mustang_midi", "%s" % midi_device, "%s" % midi_channel )
+    else:
+        syslog.syslog( "%d: /var/run/mustang is not properly setup" % pid )

@@ -1,11 +1,7 @@
-SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="1ed8", ATTRS{idProduct}=="0004", GROUP="plugdev"
-SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="1ed8", ATTRS{idProduct}=="0005", GROUP="plugdev"
-SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="1ed8", ATTRS{idProduct}=="0006", GROUP="plugdev"
-SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="1ed8", ATTRS{idProduct}=="0007", GROUP="plugdev"
-SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="1ed8", ATTRS{idProduct}=="0010", GROUP="plugdev"
-SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="1ed8", ATTRS{idProduct}=="0011", GROUP="plugdev"
-SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="1ed8", ATTRS{idProduct}=="0012", GROUP="plugdev"
-SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="1ed8", ATTRS{idProduct}=="0013", GROUP="plugdev"
-SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="1ed8", ATTRS{idProduct}=="0014", GROUP="plugdev"
-SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="1ed8", ATTRS{idProduct}=="0015", GROUP="plugdev"
-SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="1ed8", ATTRS{idProduct}=="0016", GROUP="plugdev"
+# Mustang III (original)
+ACTION=="add|change", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="1ed8", ATTRS{idProduct}=="0005", GROUP="plugdev", RUN+="/bin/bash -c '/bin/echo /usr/local/bin/mustang_bridge_start | /usr/bin/at now'"
+ACTION=="remove", ENV{ID_VENDOR_ID}=="1ed8", ENV{ID_MODEL_ID}=="0005", ENV{DEVTYPE}=="usb_device", RUN+="/usr/local/bin/mustang_bridge_stop"
+
+# Mustang III v2
+ACTION=="add|change", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="1ed8", ATTRS{idProduct}=="0016", GROUP="plugdev", RUN+="/bin/bash -c '/bin/echo /usr/local/bin/mustang_bridge_start | /usr/bin/at now'"
+ACTION=="remove", ENV{ID_VENDOR_ID}=="1ed8", ENV{ID_MODEL_ID}=="0016", ENV{DEVTYPE}=="usb_device", RUN+="/usr/local/bin/mustang_bridge_stop"

@@ -172,9 +172,8 @@ int main( int argc, const char **argv ) {
   // Don't want sysex, timing, active sense
   input_handler->ignoreTypes( true, true, true );
 
-  std::cout << "\nTranslating MIDI input - press <enter> to quit.\n";
-  char input;
-  std::cin.get(input);
+  // Block and wait for signal 
+  pause();
 
   delete input_handler;
   return 0;
