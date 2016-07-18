@@ -22,7 +22,7 @@ mustang_vid = 0x1ed8
 mustang_pid = 0x0016
 
 # Controller MIDI device
-midi_device = 2
+midi_device = 1
 
 # MIDI listen channel
 midi_channel = 1

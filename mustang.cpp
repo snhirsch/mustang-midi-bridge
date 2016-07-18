@@ -16,11 +16,25 @@
 #include "mod_defaults.h"
 #include "stomp_defaults.h"
 
+Mustang::usb_id Mustang::ids[] = {
+    { OLD_USB_PID,      0x03, false },
+    { NEW_USB_PID,      0xc1, false },
+    { V2_USB_PID,       0x03, false },
+    { MINI_USB_PID,     0x03, false },
+    { FLOOR_USB_PID,    0x03, false },
+    { BRONCO40_USB_PID, 0x03, false },
+    { V2_III_PID,       0xc1, true },
+    { V2_IV_PID,        0xc1, true },
+    { 0,                0x00, false }
+};
+    
+
 Mustang::Mustang()
 {
     amp_hand = NULL;
     curr_amp = NULL;
     tuner_active = false;
+    isV2 = false;
     
     // "apply efect" command
     memset(execute, 0x00, LENGTH);
@@ -46,6 +60,7 @@ Mustang::~Mustang()
 int Mustang::start_amp(void)
 {
     int ret, received;
+    static int init_value = -1;
     unsigned char array[LENGTH];
 
     if(amp_hand == NULL)
@@ -55,19 +70,20 @@ int Mustang::start_amp(void)
         if (ret)
             return ret;
 
-        // get handle for the device
-        if((amp_hand = libusb_open_device_with_vid_pid(NULL, USB_VID, OLD_USB_PID)) == NULL)
-            if((amp_hand = libusb_open_device_with_vid_pid(NULL, USB_VID, NEW_USB_PID)) == NULL)
-                if((amp_hand = libusb_open_device_with_vid_pid(NULL, USB_VID, V2_USB_PID)) == NULL)
-                  if((amp_hand = libusb_open_device_with_vid_pid(NULL, USB_VID, MINI_USB_PID)) == NULL)
-                    if((amp_hand = libusb_open_device_with_vid_pid(NULL, USB_VID, FLOOR_USB_PID)) == NULL)
-                        if((amp_hand = libusb_open_device_with_vid_pid(NULL, USB_VID, BRONCO40_USB_PID)) == NULL)
-                          if((amp_hand = libusb_open_device_with_vid_pid(NULL, USB_VID, V2_III_PID)) == NULL)
-                            if((amp_hand = libusb_open_device_with_vid_pid(NULL, USB_VID, V2_IV_PID)) == NULL)
-                    {
-                      libusb_exit(NULL);
-                      return -100;
-                    }
+        for ( int idx=0; ids[idx].pid != 0; idx++ ) {
+            if ( (amp_hand = libusb_open_device_with_vid_pid(NULL, USB_VID, ids[idx].pid)) != NULL ) {
+                init_value = ids[idx].init_value;
+                isV2 = ids[idx].isV2;
+                break;
+            }
+        }
+        
+        if ( init_value < 0 ) {
+            // No amp found
+            libusb_exit( NULL );
+            fprintf( stderr, "S - No Mustang USB device found\n" );
+            return -100;
+        }
 
         // detach kernel driver
         ret = libusb_kernel_driver_active(amp_hand, 0);
@@ -99,13 +115,7 @@ int Mustang::start_amp(void)
 
     memset(array, 0x00, LENGTH);
     array[0] = 0x1a;
-
-    // This seems model specific
-    // Perhaps for Mustang II?
-    //  array[1] = 0x03;
-
-    // Correct value for Mustang III
-    array[1] = 0xc1;
+    array[1] = init_value;
 
     libusb_interrupt_transfer(amp_hand, 0x01, array, LENGTH, &received, TMOUT);
     libusb_interrupt_transfer(amp_hand, 0x81, array, LENGTH, &received, TMOUT);
@@ -230,8 +240,11 @@ int Mustang::tunerMode( int value )
 void Mustang::updateAmpObj(void) {
 
     int curr = curr_state[AMP_STATE][MODEL];
+    AmpCC * new_amp = NULL;
+
     switch (curr) {
     case 0:
+        // No amp
         break;
 
     case F57_DELUXE_ID:
@@ -239,41 +252,50 @@ void Mustang::updateAmpObj(void) {
     case F65_DELUXE_ID:
     case F65_PRINCETON_ID:
     case F65_TWIN_ID:
-        delete curr_amp;
-        curr_amp = new AmpCC(this);
+    case S60S_THRIFT_ID:
+        new_amp = new AmpCC(this);
         break;
     
     case F59_BASSMAN_ID:
     case BRIT_70S_ID:
-        delete curr_amp;
-        curr_amp = new AmpCC1(this);
+        new_amp = new AmpCC1(this);
         break;
         
     case F_SUPERSONIC_ID:
-        delete curr_amp;
-        curr_amp = new AmpCC2(this);
+        new_amp = new AmpCC2(this);
         break;
         
     case BRIT_60S_ID:
-        delete curr_amp;
-        curr_amp = new AmpCC3(this);
+        new_amp = new AmpCC3(this);
         break;
         
     case BRIT_80S_ID:
     case US_90S_ID:
     case METAL_2K_ID:
-        delete curr_amp;
-        curr_amp = new AmpCC4(this);
+    case BRIT_WATT_ID:
+        new_amp = new AmpCC4(this);
         break;
         
     case STUDIO_PREAMP_ID:
-        delete curr_amp;
-        curr_amp = new AmpCC5(this);
+        new_amp = new AmpCC5(this);
+        break;
+
+    case BRIT_COLOR_ID:
+        new_amp = new AmpCC6(this);
+        break;
+        
+    case F57_TWIN_ID:
+        new_amp = new AmpCC7(this);
         break;
         
     default:
         fprintf( stderr, "W - Amp id %x not supported yet\n", curr );
         break;
+    }
+
+    if ( (new_amp!=NULL) && (new_amp!=curr_amp) ) {
+        delete curr_amp;
+        curr_amp = new_amp;
     }
 }
 
@@ -297,7 +319,7 @@ void Mustang::updateReverbObj(void) {
 void Mustang::updateDelayObj(void) {
 
     int curr = curr_state[DELAY_STATE][MODEL];
-
+    
     switch (curr) {
     case 0:
         break;
@@ -538,8 +560,32 @@ int Mustang::setAmp( int ord ) {
         array = metal_2k;
         break;
     default:
-        fprintf( stderr, "W - Amp select %d not yet supported\n", ord );
-        return 0;
+        if ( isV2 ) {
+            switch (ord) {
+            case 13:
+                array = studio_preamp;
+                break;
+            case 14:
+                array = f57_twin;
+                break;
+            case 15:
+                array = sixties_thrift;
+                break;
+            case 16:
+                array = brit_watts;
+                break;
+            case 17:
+                array = brit_color;
+                break;
+            default:
+                fprintf( stderr, "W - Amp select %d not supported\n", ord );
+                return 0;
+            }
+        }
+        else {
+            fprintf( stderr, "W - Amp select %d not supported\n", ord );
+            return 0;
+        }
     }
 
     // Setup amp personality
@@ -740,8 +786,26 @@ int Mustang::setMod( int ord ) {
         array = pitch_shifter;
         break;
     default:
-        fprintf( stderr, "W - Mod select %d not supported\n", ord );
-        return 0;
+        if ( isV2 ) {
+            switch (ord) {
+            case 12:
+                array = mod_wah;
+                break;
+            case 13:
+                array = mod_touch_wah;
+                break;
+            case 14:
+                array = diatonic_pitch_shift;
+                break;
+            default:
+                fprintf( stderr, "W - Mod select %d not supported\n", ord );
+                return 0;
+            }
+        }
+        else {
+            fprintf( stderr, "W - Mod select %d not supported\n", ord );
+            return 0;
+        }
     }
 
     array[FXSLOT] = curr_state[MOD_STATE][FXSLOT];
@@ -785,7 +849,13 @@ int Mustang::setStomp( int ord ) {
         array = fuzz;
         break;
     case 5:
-        array = fuzz_touch_wah;
+        if ( isV2 ) {
+            fprintf( stderr, "W - Stomp select %d not supported\n", ord );
+            return 0;
+        }
+        else {
+            array = fuzz_touch_wah;
+        }
         break;
     case 6:
         array = simple_comp;
@@ -794,8 +864,32 @@ int Mustang::setStomp( int ord ) {
         array = compressor;
         break;
     default:
-        fprintf( stderr, "W - Stomp select %d not supported\n", ord );
-        return 0;
+        if ( isV2 ) {
+            switch (ord) {
+            case 8:
+                array = ranger_boost;
+                break;
+            case 9:
+                array = green_box;
+                break;
+            case 10:
+                array = orange_box;
+                break;
+            case 11:
+                array = black_box;
+                break;
+            case 12:
+                array = big_fuzz;
+                break;
+            default:
+                fprintf( stderr, "W - Stomp select %d not supported\n", ord );
+                return 0;
+            }
+        }
+        else {
+            fprintf( stderr, "W - Stomp select %d not supported\n", ord );
+            return 0;
+        }
     }
 
     array[FXSLOT] = curr_state[STOMP_STATE][FXSLOT];

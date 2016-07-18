@@ -3,6 +3,30 @@
 Allow Fender Mustang series guitar amplifiers to be controlled by MIDI
 messages
 
+# What's New
+
+The command line parameter for MIDI controller port is now assumed to
+start at 0 rather than 1 in order to match the way Linux ALSA
+enumerates devices (see 'Run' below).
+
+The program has been updated to run as a non-privileged daemon
+process. You can still invoke it on the command line, but there will
+be no output to the console and it no longer responds to keypress
+input. Enter Ctrl-C (SIGINT) to exit.
+
+I have added the first version of a runtime framework that starts and
+stops the program automatically based on attached MIDI devices. This
+seems to be working on a Beaglebone SBC, but has not been extensively
+tested or documented yet. There is a small amount of customization
+required to account for your specific amp model and MIDI controller
+interface. Technically oriented users can probably work this out,
+otherwise wait a bit until I can refine the packaging and arrange to
+have the various pieces configured from a common setup file.
+
+I'm currently working on implementation of amp and effects models
+added in the Mustang v2 products and hope to have that checked in
+soon. 
+
 # Introduction
 
 The intent is to implement the published MIDI spec for the Fender
@@ -106,12 +130,28 @@ Both the amplifier and MIDI source should be connected first, then:
 ```
 $ mustang_midi  midi_port#  midi_listen_channel#
 ```
-NOTE: RPi and BBG are a bit fussy about enumeration of new USB
+NOTE1: I'm not sure about other platforms, but on Linux the MIDI
+port number is equivalent to the ALSA card index.  I had originally
+treated port as 1..n, but since ALSA (and JACK? Not sure..) starts at
+0, this has now been changed.  You can find the card index for your
+controller by connecting it to the computer and examining the
+pseudo-file, e.g.:
+
+$ cat /proc/asound/cards
+ 0 [PCH            ]: HDA-Intel - HDA Intel PCH
+                      HDA Intel PCH at 0xf7530000 irq 30
+ 1 [Interface      ]: USB-Audio - USB MS1x1 MIDI Interface
+                      M-Audio USB MS1x1 MIDI Interface at usb-0000:00:14.0-1, full speed
+
+To accept MIDI messages from devices behind the M-Audio interface you
+would now specify '1' as the MIDI port value.
+
+NOTE2: RPi and BBG are a bit fussy about enumeration of new USB
 devices. If you are not getting proper communication, quit the program
 and try replugging both the Fender amp and MIDI controller **after**
 those devices are powered up.
 
-NOTE2: I've had success using a passive USB hub with the single USB on
+NOTE3: I've had success using a passive USB hub with the single USB on
 the BBG, but YMMV since most USB<->5Pin MIDI converters draw some
 degree of bus power.  A powered hub might be necessary in some
 situations.

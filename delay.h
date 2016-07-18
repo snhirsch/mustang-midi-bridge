@@ -65,6 +65,8 @@ class MultitapDelayCC : public DelayCC {
 public:
   MultitapDelayCC( Mustang * theAmp ) : DelayCC(theAmp) {}
 private:
+  // Delay Time
+  virtual int cc50( int value ) { return continuous_control( 0x01, 0x01, 0x08, value );}
   // Feedback
   virtual int cc51( int value ) { return continuous_control( 0x02, 0x02, 0x01, value );}
   // Brightness

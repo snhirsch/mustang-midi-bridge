@@ -19,9 +19,7 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
 #if 0
   unsigned int nBytes = message->size();
   if ( nBytes > 0 ) {
-    for ( unsigned int i=0; i<nBytes; i++ )
-      std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
-    std::cout << "stamp = " << deltatime << std::endl << std::flush;
+    fprintf( stdout, "%02x %d %d\n", (int)message->at(0), (int)message->at(1), (int)message->at(2) );
   }
 #endif
 
@@ -124,6 +122,7 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
   default:
     break;
   }
+
 }
 
 // void errorcallback( RtError::Type type, const std::string & detail, void *userData ) {
@@ -131,7 +130,9 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
 // }
 
 void usage() {
-    std::cerr << "Usage: prog usb_port midi_channel\n";
+    fprintf( stderr, "Usage: mustang_midi <controller_port#> <midi_channel#>\n" );
+    fprintf( stderr, "       port = 0..n,  channel = 1..16\n" );
+
     exit( 1 );
 }
 
@@ -140,7 +141,7 @@ int main( int argc, const char **argv ) {
 
   char *endptr;
   errno = 0;
-  int port = (int) strtol( argv[1], &endptr, 10 ) - 1;
+  int port = (int) strtol( argv[1], &endptr, 10 );
   if ( endptr == argv[0] ) usage();
   if ( port < 0 ) usage();
 
@@ -163,10 +164,8 @@ int main( int argc, const char **argv ) {
     delete input_handler;
     return 8;
   }
-
-  // n.b. Midi port rank on the host system is 1..n, but this method
-  // is normal to 0.
   input_handler->openPort( port );
+  // input_handler->openVirtualPort( "TestPort" );
   input_handler->setCallback( &message_action );
 
   // Don't want sysex, timing, active sense

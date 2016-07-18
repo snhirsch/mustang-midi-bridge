@@ -10,6 +10,7 @@ class Mustang;
 // F65 Deluxe
 // F65 Princeton
 // F65 Twin
+// 60s Thrift
 //
 class AmpCC {
 
@@ -51,13 +52,21 @@ private:
   }
   // Cabinet
   virtual int cc77( int value ) {
-    if ( value < 1 || value > 12 ) return 0;
-    else                           return discrete_control( 0x11, 0x11, 0x8e, value );
+    if ( value > 12 ) return 0;
+    else              return discrete_control( 0x11, 0x11, 0x8e, value );
   }
 
   // Dummy in base class
   virtual int cc78( int value ) { return 0;}
   virtual int cc79( int value ) { return 0;}
+
+  // Noise Gate Custom Threshold
+  virtual int cc90( int value ) { 
+    if ( value > 9 ) return 0;
+    else             return discrete_control( 0x10, 0x10, 0x86, value );
+  }
+  // Noise Gate Custom Depth
+  virtual int cc91( int value ) { return continuous_control( 0x09, 0x09, 0x0c, value );}
 };
 
 
@@ -104,6 +113,7 @@ private:
 // British 80s
 // American 90s
 // Metal 2000
+// British Watt
 //
 class AmpCC4 : public AmpCC {
 public:
@@ -122,8 +132,34 @@ class AmpCC5 : public AmpCC {
 public:
   AmpCC5( Mustang * theAmp ) : AmpCC(theAmp) {}
 private:
+  // No sag / bias
+  virtual int cc74( int value ) { return 0;}
+  virtual int cc75( int value ) { return 0;}
+  // No pres / master
   virtual int cc78( int value ) { return 0;}
   virtual int cc79( int value ) { return 0;}
+};
+  
+
+// British Color
+//
+class AmpCC6 : public AmpCC {
+public:
+  AmpCC6( Mustang * theAmp ) : AmpCC(theAmp) {}
+private:
+  // Master Volume
+  virtual int cc79( int value ) { return continuous_control( 0x03, 0x03, 0x0c, value );}
+};
+  
+
+// F57 Twin
+//
+class AmpCC7 : public AmpCC {
+public:
+  AmpCC7( Mustang * theAmp ) : AmpCC(theAmp) {}
+private:
+  // Presence
+  virtual int cc78( int value ) { return continuous_control( 0x07, 0x07, 0x0c, value );}
 };
   
 

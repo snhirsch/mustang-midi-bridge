@@ -33,7 +33,7 @@
 // for USB communication
 #define TMOUT 500
 #define LENGTH 64
-//#define NANO_SEC_SLEEP 10000000
+
 
 // effect array fields
 #define DSP 2
@@ -110,8 +110,9 @@
 #define BRIT_80S_ID      0x5e
 #define US_90S_ID        0x5d
 #define METAL_2K_ID      0x6d
-#define STUDIO_PREAMP_ID 0xf1
 
+// v2 amp only
+#define STUDIO_PREAMP_ID 0xf1
 #define F57_TWIN_ID      0xf6
 #define S60S_THRIFT_ID   0xf9
 #define BRIT_WATT_ID     0xff
@@ -153,14 +154,29 @@
 #define PHASER_ID      0x4f
 #define PITCH_SHIFT_ID 0x1f
 
+// v2 mod only
+#define M_WAH_ID       0xf4
+#define M_TOUCH_WAH_ID 0xf5
+#define DIA_PSHIFT_ID  0x1f
+
 // Stomp model id values
 #define OVERDRIVE_ID   0x3c
 #define WAH_ID         0x49
 #define TOUCH_WAH_ID   0x4a
 #define FUZZ_ID        0x1a
+
+// This is not present in v2:
 #define FUZZ_TWAH_ID   0x1c
+
 #define SIMPLE_COMP_ID 0x88
 #define COMP_ID        0x07
+
+// v2 stomp only
+#define RANGE_BOOST_ID 0x03
+#define GREEN_BOX_ID   0xba
+#define ORANGE_BOX_ID  0x10
+#define BLACK_BOX_ID   0x11
+#define BIG_FUZZ_ID    0x0f
 
 
 class AmpCC;
@@ -213,8 +229,23 @@ public:
     };
 
 private:
+
+    struct usb_id {
+        // product id
+        int pid;
+        // magic value for init packet
+        int init_value;
+        // v2?
+        bool isV2;
+    };
+
+    // For device probe
+    static usb_id ids[];
+
     libusb_device_handle *amp_hand;    // handle for USB communication
     unsigned char execute[LENGTH];    // "apply" command sent after each instruction
+
+    bool isV2;
 
     // Current state of effects. Read from amp initially and maintained
     // as we change it. Major index is DSP# - 6, where:
