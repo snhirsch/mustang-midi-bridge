@@ -23,9 +23,10 @@ interface. Technically oriented users can probably work this out,
 otherwise wait a bit until I can refine the packaging and arrange to
 have the various pieces configured from a common setup file.
 
-I'm currently working on implementation of amp and effects models
-added in the Mustang v2 products and hope to have that checked in
-soon. 
+Support added for amp and effects models specific to the Mustang v2
+products.  This has had only limited testing.
+
+Added a python script to exercise the bridge.  
 
 # Introduction
 
