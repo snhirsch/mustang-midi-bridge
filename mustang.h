@@ -74,6 +74,7 @@
 
 // Offset to current device model for any state structure
 #define MODEL        16
+#define MODELX       17
 
 // Index into current state structure
 #define PRESET_NAME  0
@@ -152,12 +153,13 @@
 #define RING_MOD_ID    0x22
 #define STEP_FILT_ID   0x29
 #define PHASER_ID      0x4f
+// Note: Diatonic shifter also uses this as model byte and
+// is differentiated by 0x10 in the following 'extra' model byte.
 #define PITCH_SHIFT_ID 0x1f
 
 // v2 mod only
 #define M_WAH_ID       0xf4
 #define M_TOUCH_WAH_ID 0xf5
-#define DIA_PSHIFT_ID  0x1f
 
 // Stomp model id values
 #define OVERDRIVE_ID   0x3c

@@ -168,6 +168,52 @@ private:
   virtual int cc43( int value ) { return continuous_control( 0x04, 0x04, 0x01, value );}
 };
 
+// Wah + Touch Wah
+class ModWahCC : public ModCC {
+public:
+  ModWahCC( Mustang * theAmp ) : ModCC(theAmp) {}
+private:
+  // Mix
+  virtual int cc39( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
+  // Freq
+  virtual int cc40( int value ) { return continuous_control( 0x01, 0x01, 0x01, value );}
+  // Heel Freq
+  virtual int cc41( int value ) { return continuous_control( 0x02, 0x02, 0x01, value );}
+  // Toe Freq
+  virtual int cc42( int value ) { return continuous_control( 0x03, 0x03, 0x01, value );}
+  // Hi-Q
+  virtual int cc43( int value ) { 
+    if ( value > 1 ) return 0;
+    else             return discrete_control( 0x04, 0x04, 0x81, value );
+  }
+};
+
+
+class DiatonicShiftCC : public ModCC {
+public:
+  DiatonicShiftCC( Mustang * theAmp ) : ModCC(theAmp) {}
+private:
+  // Mix
+  virtual int cc39( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
+  // Pitch
+  virtual int cc40( int value ) { 
+    if ( value > 0x15 ) return 0;
+    else                return discrete_control( 0x01, 0x0b, 0x98, value );
+  }
+  // Key
+  virtual int cc41( int value ) { 
+    if ( value > 0x0b ) return 0;
+    else                return discrete_control( 0x02, 0x02, 0x99, value );
+  }
+  // Scale
+  virtual int cc42( int value ) { 
+    if ( value > 8 ) return 0;
+    else             return discrete_control( 0x03, 0x03, 0x9a, value );
+  }
+  // Tone
+  virtual int cc43( int value ) { return continuous_control( 0x04, 0x07, 0x01, value );}
+};
+
 
 class NullModCC : public ModCC {
 public:

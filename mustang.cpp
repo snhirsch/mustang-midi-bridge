@@ -293,7 +293,7 @@ void Mustang::updateAmpObj(void) {
         break;
     }
 
-    if ( (new_amp!=NULL) && (new_amp!=curr_amp) ) {
+    if ( new_amp!=NULL ) {
         delete curr_amp;
         curr_amp = new_amp;
     }
@@ -319,55 +319,53 @@ void Mustang::updateReverbObj(void) {
 void Mustang::updateDelayObj(void) {
 
     int curr = curr_state[DELAY_STATE][MODEL];
+    DelayCC * new_delay = NULL;
     
     switch (curr) {
     case 0:
         break;
         
     case MONO_DLY_ID:
-        delete curr_delay;
-        curr_delay = new MonoDelayCC(this);
+        new_delay = new MonoDelayCC(this);
         break;
     
     case MONO_FILTER_ID:
     case ST_FILTER_ID:
-        delete curr_delay;
-        curr_delay = new EchoFilterCC(this);
+        new_delay = new EchoFilterCC(this);
         break;
         
     case MTAP_DLY_ID:
-        delete curr_delay;
-        curr_delay = new MultitapDelayCC(this);
+        new_delay = new MultitapDelayCC(this);
         break;
         
     case PONG_DLY_ID:
-        delete curr_delay;
-        curr_delay = new PingPongDelayCC(this);
+        new_delay = new PingPongDelayCC(this);
         break;
         
     case DUCK_DLY_ID:
-        delete curr_delay;
-        curr_delay = new DuckingDelayCC(this);
+        new_delay = new DuckingDelayCC(this);
         break;
 
     case REVERSE_DLY_ID:
-        delete curr_delay;
-        curr_delay = new ReverseDelayCC(this);
+        new_delay = new ReverseDelayCC(this);
         break;
         
     case TAPE_DLY_ID:
-        delete curr_delay;
-        curr_delay = new TapeDelayCC(this);
+        new_delay = new TapeDelayCC(this);
         break;
         
     case ST_TAPE_DLY_ID:
-        delete curr_delay;
-        curr_delay = new StereoTapeDelayCC(this);
+        new_delay = new StereoTapeDelayCC(this);
         break;
         
     default:
         fprintf( stderr, "W - Delay id %x not supported yet\n", curr );
         break;
+    }
+
+    if ( new_delay!=NULL ) {
+        delete curr_delay;
+        curr_delay = new_delay;
     }
 }
 
@@ -375,57 +373,64 @@ void Mustang::updateDelayObj(void) {
 void Mustang::updateModObj(void) {
 
     int curr = curr_state[MOD_STATE][MODEL];
-
+    ModCC * new_mod = NULL;
+    
     switch (curr) {
     case 0:
         break;
         
     case SINE_CHORUS_ID:
     case TRI_CHORUS_ID:
-        delete curr_mod;
-        curr_mod = new ChorusCC(this);
+        new_mod = new ChorusCC(this);
         break;
     
     case SINE_FLANGE_ID:
     case TRI_FLANGE_ID:
-        delete curr_mod;
-        curr_mod = new FlangerCC(this);
+        new_mod = new FlangerCC(this);
         break;
         
     case VIBRATONE_ID:
-        delete curr_mod;
-        curr_mod = new VibratoneCC(this);
+        new_mod = new VibratoneCC(this);
         break;
         
     case VINT_TREM_ID:
     case SINE_TREM_ID:
-        delete curr_mod;
-        curr_mod = new TremCC(this);
+        new_mod = new TremCC(this);
         break;
         
     case RING_MOD_ID:
-        delete curr_mod;
-        curr_mod = new RingModCC(this);
+        new_mod = new RingModCC(this);
         break;
 
     case STEP_FILT_ID:
-        delete curr_mod;
-        curr_mod = new StepFilterCC(this);
+        new_mod = new StepFilterCC(this);
         break;
         
     case PHASER_ID:
-        delete curr_mod;
-        curr_mod = new PhaserCC(this);
+        new_mod = new PhaserCC(this);
         break;
         
     case PITCH_SHIFT_ID:
-        delete curr_mod;
-        curr_mod = new PitchShifterCC(this);
+    {
+        int xtra = curr_state[MOD_STATE][MODELX];
+        if      ( xtra == 0 )    new_mod = new PitchShifterCC(this);
+        else if ( xtra == 0x10 ) new_mod = new DiatonicShiftCC(this);
+    }
+    break;
+        
+    case M_WAH_ID:
+    case M_TOUCH_WAH_ID:
+        new_mod = new ModWahCC(this);
         break;
         
     default:
         fprintf( stderr, "W - Mod id %x not supported yet\n", curr );
         break;
+    }
+
+    if ( new_mod!=NULL ) {
+        delete curr_mod;
+        curr_mod = new_mod;
     }
 }
 
@@ -433,45 +438,65 @@ void Mustang::updateModObj(void) {
 void Mustang::updateStompObj(void) {
 
     int curr = curr_state[STOMP_STATE][MODEL];
-
+    StompCC * new_stomp = NULL;
+    
     switch (curr) {
     case 0:
         break;
         
     case OVERDRIVE_ID:
-        delete curr_stomp;
-        curr_stomp = new OverdriveCC(this);
+        new_stomp = new OverdriveCC(this);
         break;
     
     case WAH_ID:
     case TOUCH_WAH_ID:
-        delete curr_stomp;
-        curr_stomp = new WahCC(this);
+        new_stomp = new WahCC(this);
         break;
         
     case FUZZ_ID:
-        delete curr_stomp;
-        curr_stomp = new FuzzCC(this);
+        new_stomp = new FuzzCC(this);
         break;
         
     case FUZZ_TWAH_ID:
-        delete curr_stomp;
-        curr_stomp = new FuzzTouchWahCC(this);
+        new_stomp = new FuzzTouchWahCC(this);
         break;
         
     case SIMPLE_COMP_ID:
-        delete curr_stomp;
-        curr_stomp = new SimpleCompCC(this);
+        new_stomp = new SimpleCompCC(this);
         break;
 
     case COMP_ID:
-        delete curr_stomp;
-        curr_stomp = new CompCC(this);
+        new_stomp = new CompCC(this);
+        break;
+
+    case RANGE_BOOST_ID:
+        new_stomp = new RangerCC(this);
         break;
         
+    case GREEN_BOX_ID:
+        new_stomp = new GreenBoxCC(this);
+        break;
+        
+    case ORANGE_BOX_ID:
+        new_stomp = new OrangeBoxCC(this);
+        break;
+        
+    case BLACK_BOX_ID:
+        new_stomp = new BlackBoxCC(this);
+        break;
+        
+    case BIG_FUZZ_ID:
+        new_stomp = new BigFuzzCC(this);
+        break;
+
     default:
         fprintf( stderr, "W - Stomp id %x not supported yet\n", curr );
         break;
+    }
+
+    if ( new_stomp!=NULL ) {
+        delete curr_stomp;
+        curr_stomp = new_stomp;
     }
 }
 

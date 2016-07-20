@@ -131,6 +131,91 @@ private:
 };
 
 
+class RangerCC : public StompCC {
+public:
+  RangerCC( Mustang * theAmp ) : StompCC(theAmp) {}
+private:
+  // Level
+  virtual int cc29( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
+  // Gain
+  virtual int cc30( int value ) { return continuous_control( 0x01, 0x01, 0x01, value );}
+  // Lo-Cut
+  virtual int cc31( int value ) { return continuous_control( 0x02, 0x03, 0x01, value );}
+  // Bright
+  virtual int cc32( int value ) { return continuous_control( 0x03, 0x02, 0x01, value );}
+  // n/a
+  virtual int cc33( int value ) { return 0;}
+};
+
+
+class GreenBoxCC : public StompCC {
+public:
+  GreenBoxCC( Mustang * theAmp ) : StompCC(theAmp) {}
+private:
+  // Level
+  virtual int cc29( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
+  // Gain
+  virtual int cc30( int value ) { return continuous_control( 0x01, 0x01, 0x01, value );}
+  // Tone
+  virtual int cc31( int value ) { return continuous_control( 0x02, 0x02, 0x01, value );}
+  // Bright
+  virtual int cc32( int value ) { return continuous_control( 0x03, 0x03, 0x12, value );}
+  // n/a
+  virtual int cc33( int value ) { return 0;}
+};
+
+
+class OrangeBoxCC : public StompCC {
+public:
+  OrangeBoxCC( Mustang * theAmp ) : StompCC(theAmp) {}
+private:
+  // Level
+  virtual int cc29( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
+  // Dist
+  virtual int cc30( int value ) { return continuous_control( 0x01, 0x02, 0x01, value );}
+  // Tone
+  virtual int cc31( int value ) { return continuous_control( 0x02, 0x01, 0x01, value );}
+  // n/a
+  virtual int cc32( int value ) { return 0;}
+  // n/a
+  virtual int cc33( int value ) { return 0;}
+};
+
+
+class BlackBoxCC : public StompCC {
+public:
+  BlackBoxCC( Mustang * theAmp ) : StompCC(theAmp) {}
+private:
+  // Level
+  virtual int cc29( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
+  // Dist
+  virtual int cc30( int value ) { return continuous_control( 0x01, 0x02, 0x01, value );}
+  // Filter
+  virtual int cc31( int value ) { return continuous_control( 0x02, 0x01, 0x01, value );}
+  // n/a
+  virtual int cc32( int value ) { return 0;}
+  // n/a
+  virtual int cc33( int value ) { return 0;}
+};
+
+
+class BigFuzzCC : public StompCC {
+public:
+  BigFuzzCC( Mustang * theAmp ) : StompCC(theAmp) {}
+private:
+  // Level
+  virtual int cc29( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
+  // Tone
+  virtual int cc30( int value ) { return continuous_control( 0x01, 0x01, 0x01, value );}
+  // Sustain
+  virtual int cc31( int value ) { return continuous_control( 0x02, 0x02, 0x01, value );}
+  // n/a
+  virtual int cc32( int value ) { return 0;}
+  // n/a
+  virtual int cc33( int value ) { return 0;}
+};
+
+
 class NullStompCC : public StompCC {
 public:
   NullStompCC( Mustang * theAmp ) : StompCC(theAmp) {}
