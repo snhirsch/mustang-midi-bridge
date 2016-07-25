@@ -3,20 +3,31 @@
 #ifndef _DELAY_H
 #define _DELAY_H
 
+#include <cstring>
+
 class Mustang;
 
 class DelayCC {
 
 protected:
   Mustang * amp;
+  unsigned char model[2];
+  unsigned char slot;
 
   int continuous_control( int parm5, int parm6, int parm7, int value );
   int discrete_control( int parm5, int parm6, int parm7, int value );
 
 public:
-  DelayCC( Mustang * theAmp ) : amp(theAmp) {}
+  DelayCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : 
+    amp(theAmp), 
+    slot(theSlot) 
+  {
+    memcpy( this->model, model, 2 );
+  }
 
   int dispatch( int cc, int value );
+  const unsigned char *getModel( void ) { return model;}
+  const unsigned char getSlot( void ) { return slot;}
 
 private:
   // Level
@@ -33,7 +44,7 @@ private:
 
 class MonoDelayCC : public DelayCC {
 public:
-  MonoDelayCC( Mustang * theAmp ) : DelayCC(theAmp) {}
+  MonoDelayCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : DelayCC(theAmp,model,theSlot) {}
 private:
   // Feedback
   virtual int cc51( int value ) { return continuous_control( 0x02, 0x02, 0x01, value );}
@@ -48,7 +59,7 @@ private:
 
 class EchoFilterCC : public DelayCC {
 public:
-  EchoFilterCC( Mustang * theAmp ) : DelayCC(theAmp) {}
+  EchoFilterCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : DelayCC(theAmp,model,theSlot) {}
 private:
   // Feedback
   virtual int cc51( int value ) { return continuous_control( 0x02, 0x02, 0x01, value );}
@@ -63,7 +74,7 @@ private:
 
 class MultitapDelayCC : public DelayCC {
 public:
-  MultitapDelayCC( Mustang * theAmp ) : DelayCC(theAmp) {}
+  MultitapDelayCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : DelayCC(theAmp,model,theSlot) {}
 private:
   // Delay Time
   virtual int cc50( int value ) { return continuous_control( 0x01, 0x01, 0x08, value );}
@@ -83,7 +94,7 @@ private:
 
 class PingPongDelayCC : public DelayCC {
 public:
-  PingPongDelayCC( Mustang * theAmp ) : DelayCC(theAmp) {}
+  PingPongDelayCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : DelayCC(theAmp,model,theSlot) {}
 private:
   // Feedback
   virtual int cc51( int value ) { return continuous_control( 0x02, 0x02, 0x01, value );}
@@ -98,7 +109,7 @@ private:
 
 class DuckingDelayCC : public DelayCC {
 public:
-  DuckingDelayCC( Mustang * theAmp ) : DelayCC(theAmp) {}
+  DuckingDelayCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : DelayCC(theAmp,model,theSlot) {}
 private:
   // Feedback
   virtual int cc51( int value ) { return continuous_control( 0x02, 0x02, 0x01, value );}
@@ -113,7 +124,7 @@ private:
 
 class ReverseDelayCC : public DelayCC {
 public:
-  ReverseDelayCC( Mustang * theAmp ) : DelayCC(theAmp) {}
+  ReverseDelayCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : DelayCC(theAmp,model,theSlot) {}
 private:
   // FFdbk
   virtual int cc51( int value ) { return continuous_control( 0x02, 0x02, 0x01, value );}
@@ -128,7 +139,7 @@ private:
 
 class TapeDelayCC : public DelayCC {
 public:
-  TapeDelayCC( Mustang * theAmp ) : DelayCC(theAmp) {}
+  TapeDelayCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : DelayCC(theAmp,model,theSlot) {}
 private:
   // Feedback
   virtual int cc51( int value ) { return continuous_control( 0x02, 0x02, 0x01, value );}
@@ -143,7 +154,7 @@ private:
 
 class StereoTapeDelayCC : public DelayCC {
 public:
-  StereoTapeDelayCC( Mustang * theAmp ) : DelayCC(theAmp) {}
+  StereoTapeDelayCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : DelayCC(theAmp,model,theSlot) {}
 private:
   // Feedback
   virtual int cc51( int value ) { return continuous_control( 0x02, 0x02, 0x01, value );}
@@ -158,7 +169,7 @@ private:
 
 class NullDelayCC : public DelayCC {
 public:
-  NullDelayCC( Mustang * theAmp ) : DelayCC(theAmp) {}
+  NullDelayCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : DelayCC(theAmp,model,theSlot) {}
 private:
   virtual int cc49( int value ) { return 0;}
   virtual int cc50( int value ) { return 0;}

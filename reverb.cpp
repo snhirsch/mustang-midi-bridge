@@ -1,6 +1,7 @@
 
 #include "reverb.h"
 #include "mustang.h"
+#include "constants.h"
 
 int 
 ReverbCC::continuous_control( int parm5, int parm6, int parm7, int value ) {

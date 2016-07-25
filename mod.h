@@ -3,20 +3,31 @@
 #ifndef _MOD_H
 #define _MOD_H
 
+#include <cstring>
+
 class Mustang;
 
 class ModCC {
 
 protected:
   Mustang * amp;
+  unsigned char model[2];
+  unsigned char slot;
 
   int continuous_control( int parm5, int parm6, int parm7, int value );
   int discrete_control( int parm5, int parm6, int parm7, int value );
 
 public:
-  ModCC( Mustang * theAmp ) : amp(theAmp) {}
+  ModCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : 
+    amp(theAmp), 
+    slot(theSlot) 
+  {
+    memcpy( this->model, model, 2 );
+  }
 
   int dispatch( int cc, int value );
+  const unsigned char *getModel( void ) { return model;}
+  const unsigned char getSlot( void ) { return slot;}
 
 private:
   virtual int cc39( int value ) = 0;
@@ -29,7 +40,7 @@ private:
 
 class ChorusCC : public ModCC {
 public:
-  ChorusCC( Mustang * theAmp ) : ModCC(theAmp) {}
+  ChorusCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : ModCC(theAmp,model,theSlot) {}
 private:
   // Level
   virtual int cc39( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
@@ -46,7 +57,7 @@ private:
 
 class FlangerCC : public ModCC {
 public:
-  FlangerCC( Mustang * theAmp ) : ModCC(theAmp) {}
+  FlangerCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : ModCC(theAmp,model,theSlot) {}
 private:
   // Level
   virtual int cc39( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
@@ -63,7 +74,7 @@ private:
 
 class VibratoneCC : public ModCC {
 public:
-  VibratoneCC( Mustang * theAmp ) : ModCC(theAmp) {}
+  VibratoneCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : ModCC(theAmp,model,theSlot) {}
 private:
   // Level
   virtual int cc39( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
@@ -80,7 +91,7 @@ private:
 
 class TremCC : public ModCC {
 public:
-  TremCC( Mustang * theAmp ) : ModCC(theAmp) {}
+  TremCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : ModCC(theAmp,model,theSlot) {}
 private:
   // Level
   virtual int cc39( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
@@ -97,7 +108,7 @@ private:
 
 class RingModCC : public ModCC {
 public:
-  RingModCC( Mustang * theAmp ) : ModCC(theAmp) {}
+  RingModCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : ModCC(theAmp,model,theSlot) {}
 private:
   // Level
   virtual int cc39( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
@@ -117,7 +128,7 @@ private:
 
 class StepFilterCC : public ModCC {
 public:
-  StepFilterCC( Mustang * theAmp ) : ModCC(theAmp) {}
+  StepFilterCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : ModCC(theAmp,model,theSlot) {}
 private:
   // Level
   virtual int cc39( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
@@ -134,7 +145,7 @@ private:
 
 class PhaserCC : public ModCC {
 public:
-  PhaserCC( Mustang * theAmp ) : ModCC(theAmp) {}
+  PhaserCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : ModCC(theAmp,model,theSlot) {}
 private:
   // Level
   virtual int cc39( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
@@ -154,7 +165,7 @@ private:
 
 class PitchShifterCC : public ModCC {
 public:
-  PitchShifterCC( Mustang * theAmp ) : ModCC(theAmp) {}
+  PitchShifterCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : ModCC(theAmp,model,theSlot) {}
 private:
   // Level
   virtual int cc39( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
@@ -171,7 +182,7 @@ private:
 // Wah + Touch Wah
 class ModWahCC : public ModCC {
 public:
-  ModWahCC( Mustang * theAmp ) : ModCC(theAmp) {}
+  ModWahCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : ModCC(theAmp,model,theSlot) {}
 private:
   // Mix
   virtual int cc39( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
@@ -191,7 +202,7 @@ private:
 
 class DiatonicShiftCC : public ModCC {
 public:
-  DiatonicShiftCC( Mustang * theAmp ) : ModCC(theAmp) {}
+  DiatonicShiftCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : ModCC(theAmp,model,theSlot) {}
 private:
   // Mix
   virtual int cc39( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
@@ -217,7 +228,7 @@ private:
 
 class NullModCC : public ModCC {
 public:
-  NullModCC( Mustang * theAmp ) : ModCC(theAmp) {}
+  NullModCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : ModCC(theAmp,model,theSlot) {}
 private:
   virtual int cc39( int value ) { return 0;}
   virtual int cc40( int value ) { return 0;}

@@ -3,19 +3,30 @@
 #ifndef _REVERB_H
 #define _REVERB_H
 
+#include <cstring>
+
 class Mustang;
 
 class ReverbCC {
 
 protected:
   Mustang * amp;
+  unsigned char model[2];
+  unsigned char slot;
 
   int continuous_control( int parm5, int parm6, int parm7, int value );
 
 public:
-  ReverbCC( Mustang * theAmp ) : amp(theAmp) {}
+  ReverbCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : 
+    amp(theAmp), 
+    slot(theSlot) 
+  {
+    memcpy( this->model, model, 2 );
+  }
 
   int dispatch( int cc, int value );
+  const unsigned char *getModel( void ) { return model;}
+  const unsigned char getSlot( void ) { return slot;}
 
 private:
   // Level
@@ -33,7 +44,7 @@ private:
 
 class NullReverbCC : public ReverbCC {
 public:
-  NullReverbCC( Mustang * theAmp ) : ReverbCC(theAmp) {}
+  NullReverbCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : ReverbCC(theAmp,model,theSlot) {}
 private:
   int cc59( int value ) { return 0;}
   int cc60( int value ) { return 0;}

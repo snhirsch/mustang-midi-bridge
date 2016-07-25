@@ -1,6 +1,7 @@
 
 #include "delay.h"
 #include "mustang.h"
+#include "constants.h"
 
 int 
 DelayCC::continuous_control( int parm5, int parm6, int parm7, int value ) {

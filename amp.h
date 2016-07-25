@@ -3,6 +3,8 @@
 #ifndef _AMPCC_H
 #define _AMPCC_H
 
+#include <cstring>
+
 class Mustang;
 
 // F57 Deluxe
@@ -16,6 +18,8 @@ class AmpCC {
 
 protected:
   Mustang * amp;
+  unsigned char model[2];
+  unsigned char slot;
 
   // Only base class is friend of Mustang, so forward calls from
   // derived classes through these methods.
@@ -23,9 +27,16 @@ protected:
   int discrete_control( int parm5, int parm6, int parm7, int value );
 
 public:
-  AmpCC( Mustang * theAmp ) : amp(theAmp) {}
+  AmpCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : 
+    amp(theAmp), 
+    slot(theSlot) 
+  {
+    memcpy( this->model, model, 2 );
+  }
 
-  virtual int dispatch( int cc, int value );
+  int dispatch( int cc, int value );
+  const unsigned char *getModel( void ) { return model;}
+  const unsigned char getSlot( void ) { return slot;}
 
 private:
   // Gain
@@ -75,7 +86,7 @@ private:
 //
 class AmpCC1 : public AmpCC {
 public:
-  AmpCC1( Mustang * theAmp ) : AmpCC(theAmp) {}
+  AmpCC1( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : AmpCC(theAmp,model,theSlot) {}
 private:
   // Presence
   virtual int cc78( int value ) { return continuous_control( 0x07, 0x07, 0x0c, value );}
@@ -88,7 +99,7 @@ private:
 //
 class AmpCC2 : public AmpCC {
 public:
-  AmpCC2( Mustang * theAmp ) : AmpCC(theAmp) {}
+  AmpCC2( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : AmpCC(theAmp,model,theSlot) {}
 private:
   // Gain2
   virtual int cc78( int value ) { return continuous_control( 0x02, 0x02, 0x0c, value );}
@@ -101,7 +112,7 @@ private:
 //
 class AmpCC3 : public AmpCC {
 public:
-  AmpCC3( Mustang * theAmp ) : AmpCC(theAmp) {}
+  AmpCC3( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : AmpCC(theAmp,model,theSlot) {}
 private:
   // Cut
   virtual int cc78( int value ) { return continuous_control( 0x07, 0x07, 0x0c, value );}
@@ -117,7 +128,7 @@ private:
 //
 class AmpCC4 : public AmpCC {
 public:
-  AmpCC4( Mustang * theAmp ) : AmpCC(theAmp) {}
+  AmpCC4( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : AmpCC(theAmp,model,theSlot) {}
 private:
   // Presence
   virtual int cc78( int value ) { return continuous_control( 0x07, 0x07, 0x0c, value );}
@@ -130,7 +141,7 @@ private:
 //
 class AmpCC5 : public AmpCC {
 public:
-  AmpCC5( Mustang * theAmp ) : AmpCC(theAmp) {}
+  AmpCC5( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : AmpCC(theAmp,model,theSlot) {}
 private:
   // No sag / bias
   virtual int cc74( int value ) { return 0;}
@@ -145,7 +156,7 @@ private:
 //
 class AmpCC6 : public AmpCC {
 public:
-  AmpCC6( Mustang * theAmp ) : AmpCC(theAmp) {}
+  AmpCC6( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : AmpCC(theAmp,model,theSlot) {}
 private:
   // Master Volume
   virtual int cc79( int value ) { return continuous_control( 0x03, 0x03, 0x0c, value );}
@@ -156,7 +167,7 @@ private:
 //
 class AmpCC7 : public AmpCC {
 public:
-  AmpCC7( Mustang * theAmp ) : AmpCC(theAmp) {}
+  AmpCC7( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : AmpCC(theAmp,model,theSlot) {}
 private:
   // Presence
   virtual int cc78( int value ) { return continuous_control( 0x07, 0x07, 0x0c, value );}
@@ -167,7 +178,7 @@ private:
 //
 class NullAmpCC : public AmpCC {
 public:
-  NullAmpCC( Mustang * theAmp ) : AmpCC(theAmp) {}
+  NullAmpCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : AmpCC(theAmp,model,theSlot) {}
 private:
   virtual int cc69( int value ) { return 0;}
   virtual int cc70( int value ) { return 0;}

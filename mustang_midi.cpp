@@ -1,19 +1,25 @@
 #include <iostream>
 #include <cstdlib>
+#include <cstdio>
+#include <unistd.h>
 #include <RtMidi.h>
 #include <cerrno>
 
 #include "mustang.h"
 
+#if 0
 #include "amp.h"
 #include "reverb.h"
 #include "delay.h"
 #include "mod.h"
 #include "stomp.h"
+#endif
 
 static Mustang mustang;
 
 static int channel;
+
+#if 0
 
 void message_action( double deltatime, std::vector< unsigned char > *message, void *userData ) {
 #if 0
@@ -125,6 +131,8 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
 
 }
 
+#endif
+
 // void errorcallback( RtError::Type type, const std::string & detail, void *userData ) {
 //   std::cout << "Error: Code = " << type << ", Msg: " << detail << "\n";
 // }
@@ -149,12 +157,18 @@ int main( int argc, const char **argv ) {
   if ( endptr == argv[0] ) usage();
   if ( channel < 0 || channel > 15 ) usage();
 
-  int rc = mustang.start_amp();
-  if (rc) {
-    std::cout << "Fender USB initialization failed: " << rc << "\n";
-    return 8;
+  if ( 0 != mustang.initialize() ) {
+    fprintf( stderr, "Cannot setup USB communication\n" );
+    exit( 1 );
+  }
+  if ( 0 != mustang.commStart() ) {
+    fprintf( stderr, "Thread setup and init failed\n" );
+    exit( 1 );
   }
 
+  fprintf( stderr, "Setup done!\n" );
+  
+#if 0
   RtMidiIn *input_handler = new RtMidiIn();
 
   // See if we have any ports
@@ -171,9 +185,23 @@ int main( int argc, const char **argv ) {
   // Don't want sysex, timing, active sense
   input_handler->ignoreTypes( true, true, true );
 
+#endif
+
   // Block and wait for signal 
   pause();
 
-  delete input_handler;
+  if ( 0 != mustang.commShutdown() ) {
+    fprintf( stderr, "Thread shutdown failed\n" );
+    exit( 1 );
+  }
+  if ( 0 != mustang.deinitialize() ) {
+    fprintf( stderr, "USB shutdown failed\n" );
+    exit( 1 );
+  }
+  
+  fprintf( stderr, "Shutdown complete!\n" );
+  
+  // delete input_handler;
   return 0;
+
 }

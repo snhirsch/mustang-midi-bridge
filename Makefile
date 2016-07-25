@@ -7,7 +7,7 @@ DEP = $(subst .cpp,.d,$(SRC))
 # The -M* switches automatically generate .d dependency files
 CPPFLAGS += -MP -MMD $(INCDIRS)
 
-LDLIBS = -lrtmidi -lusb-1.0
+LDLIBS = -lrtmidi -lusb-1.0 -lpthread
 
 BIN = mustang_midi
 
