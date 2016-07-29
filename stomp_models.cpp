@@ -1,5 +1,7 @@
 #include "stomp_models.h"
 
+const unsigned char null_stomp_id[]  = { 0x00, 0x00 };
+
 const unsigned char overdrive_id[]   = { 0x3c, 0x00 };
 const unsigned char wah_id[]         = { 0x49, 0x00 };
 const unsigned char touch_wah_id[]   = { 0x4a, 0x00 };

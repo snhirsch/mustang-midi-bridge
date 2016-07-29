@@ -1,5 +1,7 @@
 #include "amp_models.h"
 
+const unsigned char null_amp_id[]      = { 0x00, 0x00 };
+
 const unsigned char f57_deluxe_id[]    = { 0x67, 0x00 };
 const unsigned char f59_bassman_id[]   = { 0x64, 0x00 };
 const unsigned char f57_champ_id[]     = { 0x7c, 0x00 };

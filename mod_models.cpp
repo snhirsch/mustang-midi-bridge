@@ -1,5 +1,7 @@
 #include "mod_models.h"
 
+const unsigned char null_mod_id[]    = { 0x00, 0x00 };
+
 const unsigned char sine_chorus_id[] = { 0x12, 0x00 };
 const unsigned char tri_chorus_id[]  = { 0x13, 0x00 };
 const unsigned char sine_flange_id[] = { 0x18, 0x00 };

@@ -14,8 +14,8 @@ protected:
   unsigned char model[2];
   unsigned char slot;
   
-  int continuous_control( int parm5, int parm6, int parm7, int value );
-  int discrete_control( int parm5, int parm6, int parm7, int value );
+  int continuous_control( int parm5, int parm6, int parm7, int value, unsigned char *cmd );
+  int discrete_control( int parm5, int parm6, int parm7, int value, unsigned char *cmd );
 
 public:
   StompCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : 
@@ -25,16 +25,16 @@ public:
     memcpy( this->model, model, 2 );
   }
 
-  int dispatch( int cc, int value );
+  int dispatch( int cc, int value, unsigned char *cmd );
   const unsigned char *getModel( void ) { return model;}
   const unsigned char getSlot( void ) { return slot;}
 
 private:
-  virtual int cc29( int value ) = 0;
-  virtual int cc30( int value ) = 0;
-  virtual int cc31( int value ) = 0;
-  virtual int cc32( int value ) = 0;
-  virtual int cc33( int value ) = 0;
+  virtual int cc29( int value, unsigned char *cmd ) = 0;
+  virtual int cc30( int value, unsigned char *cmd ) = 0;
+  virtual int cc31( int value, unsigned char *cmd ) = 0;
+  virtual int cc32( int value, unsigned char *cmd ) = 0;
+  virtual int cc33( int value, unsigned char *cmd ) = 0;
  };
 
 
@@ -43,15 +43,15 @@ public:
   OverdriveCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : StompCC(theAmp,model,theSlot) {}
 private:
   // Level
-  virtual int cc29( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
+  virtual int cc29( int value, unsigned char *cmd ) { return continuous_control( 0x00, 0x00, 0x01, value, cmd );}
   // Gain
-  virtual int cc30( int value ) { return continuous_control( 0x01, 0x01, 0x01, value );}
+  virtual int cc30( int value, unsigned char *cmd ) { return continuous_control( 0x01, 0x01, 0x01, value, cmd );}
   // Low
-  virtual int cc31( int value ) { return continuous_control( 0x02, 0x02, 0x01, value );}
+  virtual int cc31( int value, unsigned char *cmd ) { return continuous_control( 0x02, 0x02, 0x01, value, cmd );}
   // Mid
-  virtual int cc32( int value ) { return continuous_control( 0x03, 0x03, 0x01, value );}
+  virtual int cc32( int value, unsigned char *cmd ) { return continuous_control( 0x03, 0x03, 0x01, value, cmd );}
   // High
-  virtual int cc33( int value ) { return continuous_control( 0x04, 0x04, 0x01, value );}
+  virtual int cc33( int value, unsigned char *cmd ) { return continuous_control( 0x04, 0x04, 0x01, value, cmd );}
 };
 
 
@@ -60,17 +60,17 @@ public:
   WahCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : StompCC(theAmp,model,theSlot) {}
 private:
   // Mix
-  virtual int cc29( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
+  virtual int cc29( int value, unsigned char *cmd ) { return continuous_control( 0x00, 0x00, 0x01, value, cmd );}
   // Freq
-  virtual int cc30( int value ) { return continuous_control( 0x01, 0x01, 0x01, value );}
+  virtual int cc30( int value, unsigned char *cmd ) { return continuous_control( 0x01, 0x01, 0x01, value, cmd );}
   // Heel Freq
-  virtual int cc31( int value ) { return continuous_control( 0x02, 0x02, 0x01, value );}
+  virtual int cc31( int value, unsigned char *cmd ) { return continuous_control( 0x02, 0x02, 0x01, value, cmd );}
   // Toe Freq
-  virtual int cc32( int value ) { return continuous_control( 0x03, 0x03, 0x01, value );}
+  virtual int cc32( int value, unsigned char *cmd ) { return continuous_control( 0x03, 0x03, 0x01, value, cmd );}
   // High Q
-  virtual int cc33( int value ) { 
-    if ( value > 1 ) return 0;
-    else             return discrete_control( 0x04, 0x04, 0x81, value );
+  virtual int cc33( int value, unsigned char *cmd ) { 
+    if ( value > 1 ) return -1;
+    else             return discrete_control( 0x04, 0x04, 0x81, value, cmd );
   }
 };
 
@@ -80,15 +80,15 @@ public:
   FuzzCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : StompCC(theAmp,model,theSlot) {}
 private:
   // Level
-  virtual int cc29( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
+  virtual int cc29( int value, unsigned char *cmd ) { return continuous_control( 0x00, 0x00, 0x01, value, cmd );}
   // Gain
-  virtual int cc30( int value ) { return continuous_control( 0x01, 0x01, 0x01, value );}
+  virtual int cc30( int value, unsigned char *cmd ) { return continuous_control( 0x01, 0x01, 0x01, value, cmd );}
   // Octave
-  virtual int cc31( int value ) { return continuous_control( 0x02, 0x02, 0x01, value );}
+  virtual int cc31( int value, unsigned char *cmd ) { return continuous_control( 0x02, 0x02, 0x01, value, cmd );}
   // Low
-  virtual int cc32( int value ) { return continuous_control( 0x03, 0x03, 0x01, value );}
+  virtual int cc32( int value, unsigned char *cmd ) { return continuous_control( 0x03, 0x03, 0x01, value, cmd );}
   // High
-  virtual int cc33( int value ) { return continuous_control( 0x04, 0x04, 0x01, value );}
+  virtual int cc33( int value, unsigned char *cmd ) { return continuous_control( 0x04, 0x04, 0x01, value, cmd );}
 };
 
 
@@ -97,15 +97,15 @@ public:
   FuzzTouchWahCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : StompCC(theAmp,model,theSlot) {}
 private:
   // Level
-  virtual int cc29( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
+  virtual int cc29( int value, unsigned char *cmd ) { return continuous_control( 0x00, 0x00, 0x01, value, cmd );}
   // Gain
-  virtual int cc30( int value ) { return continuous_control( 0x01, 0x01, 0x01, value );}
+  virtual int cc30( int value, unsigned char *cmd ) { return continuous_control( 0x01, 0x01, 0x01, value, cmd );}
   // Sens
-  virtual int cc31( int value ) { return continuous_control( 0x02, 0x02, 0x01, value );}
+  virtual int cc31( int value, unsigned char *cmd ) { return continuous_control( 0x02, 0x02, 0x01, value, cmd );}
   // Octave
-  virtual int cc32( int value ) { return continuous_control( 0x03, 0x03, 0x01, value );}
+  virtual int cc32( int value, unsigned char *cmd ) { return continuous_control( 0x03, 0x03, 0x01, value, cmd );}
   // Peak
-  virtual int cc33( int value ) { return continuous_control( 0x04, 0x04, 0x01, value );}
+  virtual int cc33( int value, unsigned char *cmd ) { return continuous_control( 0x04, 0x04, 0x01, value, cmd );}
 };
 
 
@@ -114,14 +114,14 @@ public:
   SimpleCompCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : StompCC(theAmp,model,theSlot) {}
 private:
   // Type
-  virtual int cc29( int value ) { 
-    if ( value > 3 ) return 0;
-    else             return discrete_control( 0x00, 0x05, 0x92, value );
+  virtual int cc29( int value, unsigned char *cmd ) { 
+    if ( value > 3 ) return -1;
+    else             return discrete_control( 0x00, 0x05, 0x92, value, cmd );
   }
-  virtual int cc30( int value ) { return 0;}
-  virtual int cc31( int value ) { return 0;}
-  virtual int cc32( int value ) { return 0;}
-  virtual int cc33( int value ) { return 0;}
+  virtual int cc30( int value, unsigned char *cmd ) { return -1;}
+  virtual int cc31( int value, unsigned char *cmd ) { return -1;}
+  virtual int cc32( int value, unsigned char *cmd ) { return -1;}
+  virtual int cc33( int value, unsigned char *cmd ) { return -1;}
 };
 
 
@@ -130,15 +130,15 @@ public:
   CompCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : StompCC(theAmp,model,theSlot) {}
 private:
   // Level
-  virtual int cc29( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
+  virtual int cc29( int value, unsigned char *cmd ) { return continuous_control( 0x00, 0x00, 0x01, value, cmd );}
   // Thresh
-  virtual int cc30( int value ) { return continuous_control( 0x01, 0x01, 0x01, value );}
+  virtual int cc30( int value, unsigned char *cmd ) { return continuous_control( 0x01, 0x01, 0x01, value, cmd );}
   // Ratio
-  virtual int cc31( int value ) { return continuous_control( 0x02, 0x02, 0x04, value );}
+  virtual int cc31( int value, unsigned char *cmd ) { return continuous_control( 0x02, 0x02, 0x04, value, cmd );}
   // Attack
-  virtual int cc32( int value ) { return continuous_control( 0x03, 0x03, 0x01, value );}
+  virtual int cc32( int value, unsigned char *cmd ) { return continuous_control( 0x03, 0x03, 0x01, value, cmd );}
   // Release
-  virtual int cc33( int value ) { return continuous_control( 0x04, 0x04, 0x01, value );}
+  virtual int cc33( int value, unsigned char *cmd ) { return continuous_control( 0x04, 0x04, 0x01, value, cmd );}
 };
 
 
@@ -147,15 +147,15 @@ public:
   RangerCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot) : StompCC(theAmp,model,theSlot) {}
 private:
   // Level
-  virtual int cc29( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
+  virtual int cc29( int value, unsigned char *cmd ) { return continuous_control( 0x00, 0x00, 0x01, value, cmd );}
   // Gain
-  virtual int cc30( int value ) { return continuous_control( 0x01, 0x01, 0x01, value );}
+  virtual int cc30( int value, unsigned char *cmd ) { return continuous_control( 0x01, 0x01, 0x01, value, cmd );}
   // Lo-Cut
-  virtual int cc31( int value ) { return continuous_control( 0x02, 0x03, 0x01, value );}
+  virtual int cc31( int value, unsigned char *cmd ) { return continuous_control( 0x02, 0x03, 0x01, value, cmd );}
   // Bright
-  virtual int cc32( int value ) { return continuous_control( 0x03, 0x02, 0x01, value );}
+  virtual int cc32( int value, unsigned char *cmd ) { return continuous_control( 0x03, 0x02, 0x01, value, cmd );}
   // n/a
-  virtual int cc33( int value ) { return 0;}
+  virtual int cc33( int value, unsigned char *cmd ) { return -1;}
 };
 
 
@@ -164,15 +164,15 @@ public:
   GreenBoxCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : StompCC(theAmp,model,theSlot) {}
 private:
   // Level
-  virtual int cc29( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
+  virtual int cc29( int value, unsigned char *cmd ) { return continuous_control( 0x00, 0x00, 0x01, value, cmd );}
   // Gain
-  virtual int cc30( int value ) { return continuous_control( 0x01, 0x01, 0x01, value );}
+  virtual int cc30( int value, unsigned char *cmd ) { return continuous_control( 0x01, 0x01, 0x01, value, cmd );}
   // Tone
-  virtual int cc31( int value ) { return continuous_control( 0x02, 0x02, 0x01, value );}
+  virtual int cc31( int value, unsigned char *cmd ) { return continuous_control( 0x02, 0x02, 0x01, value, cmd );}
   // Bright
-  virtual int cc32( int value ) { return continuous_control( 0x03, 0x03, 0x12, value );}
+  virtual int cc32( int value, unsigned char *cmd ) { return continuous_control( 0x03, 0x03, 0x12, value, cmd );}
   // n/a
-  virtual int cc33( int value ) { return 0;}
+  virtual int cc33( int value, unsigned char *cmd ) { return -1;}
 };
 
 
@@ -181,15 +181,15 @@ public:
   OrangeBoxCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : StompCC(theAmp,model,theSlot) {}
 private:
   // Level
-  virtual int cc29( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
+  virtual int cc29( int value, unsigned char *cmd ) { return continuous_control( 0x00, 0x00, 0x01, value, cmd );}
   // Dist
-  virtual int cc30( int value ) { return continuous_control( 0x01, 0x02, 0x01, value );}
+  virtual int cc30( int value, unsigned char *cmd ) { return continuous_control( 0x01, 0x02, 0x01, value, cmd );}
   // Tone
-  virtual int cc31( int value ) { return continuous_control( 0x02, 0x01, 0x01, value );}
+  virtual int cc31( int value, unsigned char *cmd ) { return continuous_control( 0x02, 0x01, 0x01, value, cmd );}
   // n/a
-  virtual int cc32( int value ) { return 0;}
+  virtual int cc32( int value, unsigned char *cmd ) { return -1;}
   // n/a
-  virtual int cc33( int value ) { return 0;}
+  virtual int cc33( int value, unsigned char *cmd ) { return -1;}
 };
 
 
@@ -198,15 +198,15 @@ public:
   BlackBoxCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : StompCC(theAmp,model,theSlot) {}
 private:
   // Level
-  virtual int cc29( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
+  virtual int cc29( int value, unsigned char *cmd ) { return continuous_control( 0x00, 0x00, 0x01, value, cmd );}
   // Dist
-  virtual int cc30( int value ) { return continuous_control( 0x01, 0x02, 0x01, value );}
+  virtual int cc30( int value, unsigned char *cmd ) { return continuous_control( 0x01, 0x02, 0x01, value, cmd );}
   // Filter
-  virtual int cc31( int value ) { return continuous_control( 0x02, 0x01, 0x01, value );}
+  virtual int cc31( int value, unsigned char *cmd ) { return continuous_control( 0x02, 0x01, 0x01, value, cmd );}
   // n/a
-  virtual int cc32( int value ) { return 0;}
+  virtual int cc32( int value, unsigned char *cmd ) { return -1;}
   // n/a
-  virtual int cc33( int value ) { return 0;}
+  virtual int cc33( int value, unsigned char *cmd ) { return -1;}
 };
 
 
@@ -215,15 +215,15 @@ public:
   BigFuzzCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : StompCC(theAmp,model,theSlot) {}
 private:
   // Level
-  virtual int cc29( int value ) { return continuous_control( 0x00, 0x00, 0x01, value );}
+  virtual int cc29( int value, unsigned char *cmd ) { return continuous_control( 0x00, 0x00, 0x01, value, cmd );}
   // Tone
-  virtual int cc30( int value ) { return continuous_control( 0x01, 0x01, 0x01, value );}
+  virtual int cc30( int value, unsigned char *cmd ) { return continuous_control( 0x01, 0x01, 0x01, value, cmd );}
   // Sustain
-  virtual int cc31( int value ) { return continuous_control( 0x02, 0x02, 0x01, value );}
+  virtual int cc31( int value, unsigned char *cmd ) { return continuous_control( 0x02, 0x02, 0x01, value, cmd );}
   // n/a
-  virtual int cc32( int value ) { return 0;}
+  virtual int cc32( int value, unsigned char *cmd ) { return -1;}
   // n/a
-  virtual int cc33( int value ) { return 0;}
+  virtual int cc33( int value, unsigned char *cmd ) { return -1;}
 };
 
 
@@ -231,11 +231,11 @@ class NullStompCC : public StompCC {
 public:
   NullStompCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : StompCC(theAmp,model,theSlot) {}
 private:
-  virtual int cc29( int value ) { return 0;}
-  virtual int cc30( int value ) { return 0;}
-  virtual int cc31( int value ) { return 0;}
-  virtual int cc32( int value ) { return 0;}
-  virtual int cc33( int value ) { return 0;}
+  virtual int cc29( int value, unsigned char *cmd ) { return -1;}
+  virtual int cc30( int value, unsigned char *cmd ) { return -1;}
+  virtual int cc31( int value, unsigned char *cmd ) { return -1;}
+  virtual int cc32( int value, unsigned char *cmd ) { return -1;}
+  virtual int cc33( int value, unsigned char *cmd ) { return -1;}
 };
 
 

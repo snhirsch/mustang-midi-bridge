@@ -1,6 +1,8 @@
 #ifndef STOMP_MODELS_H
 #define STOMP_MODELS_H
 
+extern const unsigned char null_stomp_id[];
+
 extern const unsigned char overdrive_id[];
 extern const unsigned char wah_id[];
 extern const unsigned char touch_wah_id[];

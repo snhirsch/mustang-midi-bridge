@@ -1,84 +1,83 @@
 
 #include "amp.h"
-#include "mustang.h"
-#include "constants.h"
+#include "magic.h"
 
 int 
-AmpCC::continuous_control( int parm5, int parm6, int parm7, int value ) {
-  Mustang::Cmd cmd;
-  cmd.state_index = AMP_STATE;
-  cmd.parm2 = 0x02;
-  cmd.parm5 = parm5;
-  cmd.parm6 = parm6;
-  cmd.parm7 = parm7;
-  cmd.value = value;
-  
-  return amp->continuous_control( cmd );
+AmpCC::continuous_control( int parm5, int parm6, int parm7, int value, unsigned char *cmd ) {
+  cmd[2] = 0x02;
+  memcpy( cmd + 3, model, 2 );
+  cmd[5] = parm5;
+  cmd[6] = parm6;
+  cmd[7] = parm7;
+
+  unsigned short magic = magic_values[value];
+  cmd[9] = magic & 0xff;
+  cmd[10] = (magic >> 8) & 0xff;
+  return 0;
 }
 
 int 
-AmpCC::discrete_control( int parm5, int parm6, int parm7, int value ) {
-  Mustang::Cmd cmd;
-  cmd.state_index = AMP_STATE;
-  cmd.parm2 = 0x02;
-  cmd.parm5 = parm5;
-  cmd.parm6 = parm6;
-  cmd.parm7 = parm7;
-  cmd.value = value;
+AmpCC::discrete_control( int parm5, int parm6, int parm7, int value, unsigned char *cmd ) {
+  cmd[2] = 0x02;
+  memcpy( cmd + 3, model, 2 );
+  cmd[5] = parm5;
+  cmd[6] = parm6;
+  cmd[7] = parm7;
 
-  return amp->discrete_control( cmd );
+  cmd[9] = value;
+  return 0;
 }
 
 int
-AmpCC::dispatch( int cc, int value ) {
+AmpCC::dispatch( int cc, int value, unsigned char *cmd ) {
 
   switch( cc ) {
   case 69:
     // Gain
-    return cc69( value );
+    return cc69( value, cmd );
     break;
   case 70:
     // Channel volume
-    return cc70( value );
+    return cc70( value, cmd );
     break;
   case 71:
     // Treble
-    return cc71( value );
+    return cc71( value, cmd );
     break;
   case 72:
     // Mid
-    return cc72( value );
+    return cc72( value, cmd );
     break;
   case 73:
     // Bass
-    return cc73( value );
+    return cc73( value, cmd );
     break;
   case 74:
     // Sag
-    return cc74( value );
+    return cc74( value, cmd );
     break;
   case 75:
     // Bias
-    return cc75( value );
+    return cc75( value, cmd );
     break;
   case 76:
     // Noise Gate
-    return cc76( value );
+    return cc76( value, cmd );
     break;
   case 77:
     // Cabinet
-    return cc77( value );
+    return cc77( value, cmd );
     break;
   case 78:
     // Presence / Gain2 / Cut
-    return cc78( value );
+    return cc78( value, cmd );
     break;
   case 79:
     // Blend / Master Volume
-    return cc79( value );
+    return cc79( value, cmd );
     break;
   default:
-    return 0;
+    return -1;
     break;
   }
 }

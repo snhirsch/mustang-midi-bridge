@@ -13,18 +13,10 @@
 #define MI_II_V2     0x0014
 #define MIII_IV_V_V2 0x0016
 
-#define DSP 2
-#define PATCH_SLOT 4
-#define EFFECT 16
 #define FXSLOT 18
-
-// direct control fields
-#define FAMILY 2
-#define ACTIVE_INVERT 3
 
 // Offset to current device model for any state structure
 #define MODEL        16
-#define MODELX       17
 
 // Index into current state structure
 #define AMP_STATE    0
@@ -33,19 +25,6 @@
 #define DELAY_STATE  3
 #define REVERB_STATE 4
 #define PEDAL_STATE  5
-
-// DSP Category
-#define AMP_DSP      5
-#define STOMP_DSP    6
-#define MOD_DSP      7
-#define DELAY_DSP    8
-#define REVERB_DSP   9
-
-// DSP Family (used for direct parm set) - Effectively DSP - 3
-#define STOMP_FAM    3
-#define MOD_FAM      4
-#define DELAY_FAM    5
-#define REVERB_FAM   6
 
 // Reverb model id values
 #define SM_HALL_ID       0x0024

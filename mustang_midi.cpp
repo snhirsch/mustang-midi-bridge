@@ -7,26 +7,16 @@
 
 #include "mustang.h"
 
-#if 0
-#include "amp.h"
-#include "reverb.h"
-#include "delay.h"
-#include "mod.h"
-#include "stomp.h"
-#endif
-
 static Mustang mustang;
 
 static int channel;
 
-#if 0
 
 void message_action( double deltatime, std::vector< unsigned char > *message, void *userData ) {
 #if 0
   unsigned int nBytes = message->size();
-  if ( nBytes > 0 ) {
-    fprintf( stdout, "%02x %d %d\n", (int)message->at(0), (int)message->at(1), (int)message->at(2) );
-  }
+  if      ( nBytes == 2 ) fprintf( stdout, "%02x %d\n", (int)message->at(0), (int)message->at(1) );
+  else if ( nBytes == 3 ) fprintf( stdout, "%02x %d %d\n", (int)message->at(0), (int)message->at(1), (int)message->at(2) );
 #endif
 
   // Is this for us?
@@ -40,7 +30,7 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
   case 0xc0: {
     // Program change
     int bank = (int)(*message)[1];
-    int rc = mustang.load_memory_bank( bank );
+    int rc = mustang.patchChange( bank );
     if ( rc ) {
       fprintf( stderr, "Error: PC#%d failed. RC = %d\n", bank, rc );
     }
@@ -59,20 +49,20 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
     }
     // All EFX toggle
     else if ( cc == 22 ) {
-      rc = mustang.effect_toggle( 23, value );
+      rc = mustang.effectToggle( 23, value );
       if ( rc == 0 ) {
-        rc = mustang.effect_toggle( 24, value );
+        rc = mustang.effectToggle( 24, value );
         if ( rc == 0 ) {
-          rc = mustang.effect_toggle( 25, value );
+          rc = mustang.effectToggle( 25, value );
           if ( rc == 0 ) {
-            rc = mustang.effect_toggle( 26, value );
+            rc = mustang.effectToggle( 26, value );
           }
         }
       }
     }
     // Effects on/off
     else if ( cc >= 23 && cc <= 26 ) {
-      rc = mustang.effect_toggle( cc, value );
+      rc = mustang.effectToggle( cc, value );
     }
     // Set stomp model
     else if ( cc == 28 ) {
@@ -80,8 +70,7 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
     }
     // Stomp CC handler
     else if ( cc >= 29 && cc <= 33 ) {
-      StompCC *stompObj = mustang.getStomp();
-      rc = stompObj->dispatch( cc, value );
+      rc = mustang.stompControl( cc, value );
     }
     // Set mod model
     else if ( cc == 38 ) {
@@ -89,8 +78,7 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
     }
     // Mod CC handler
     else if ( cc >= 39 && cc <= 43 ) {
-      ModCC *modObj = mustang.getMod();
-      rc = modObj->dispatch( cc, value );
+      rc = mustang.modControl( cc, value );
     }
     // Set delay model
     else if ( cc == 48 ) {
@@ -98,8 +86,7 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
     }
     // Delay CC handler
     else if ( cc >= 49 && cc <= 54 ) {
-      DelayCC *delayObj = mustang.getDelay();
-      rc = delayObj->dispatch( cc, value );
+      rc = mustang.delayControl( cc, value );
     }
     // Set reverb model
     else if ( cc == 58 ) {
@@ -107,8 +94,7 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
     }
     // Reverb CC handler
     else if ( cc >= 59 && cc <= 63 ) {
-      ReverbCC *reverbObj = mustang.getReverb();
-      rc = reverbObj->dispatch( cc, value );
+      rc = mustang.reverbControl( cc, value );
     }
     // Set amp model
     else if ( cc == 68 ) {
@@ -116,8 +102,7 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
     }
     // Amp CC Handler
     else if ( cc >= 69 && cc <= 79 ) {
-      AmpCC *ampObj = mustang.getAmp();
-      rc = ampObj->dispatch( cc, value );
+      rc = mustang.ampControl( cc, value );
     }
     if ( rc ) {
       fprintf( stderr, "Error: CC#%d failed. RC = %d\n", cc, rc );
@@ -130,8 +115,6 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
   }
 
 }
-
-#endif
 
 // void errorcallback( RtError::Type type, const std::string & detail, void *userData ) {
 //   std::cout << "Error: Code = " << type << ", Msg: " << detail << "\n";
@@ -166,9 +149,6 @@ int main( int argc, const char **argv ) {
     exit( 1 );
   }
 
-  fprintf( stderr, "Setup done!\n" );
-  
-#if 0
   RtMidiIn *input_handler = new RtMidiIn();
 
   // See if we have any ports
@@ -185,8 +165,6 @@ int main( int argc, const char **argv ) {
   // Don't want sysex, timing, active sense
   input_handler->ignoreTypes( true, true, true );
 
-#endif
-
   // Block and wait for signal 
   pause();
 
@@ -198,8 +176,6 @@ int main( int argc, const char **argv ) {
     fprintf( stderr, "USB shutdown failed\n" );
     exit( 1 );
   }
-  
-  fprintf( stderr, "Shutdown complete!\n" );
   
   // delete input_handler;
   return 0;

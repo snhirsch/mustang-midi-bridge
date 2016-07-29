@@ -1,57 +1,56 @@
 
 #include "mod.h"
-#include "mustang.h"
-#include "constants.h"
+#include "magic.h"
 
 int 
-ModCC::continuous_control( int parm5, int parm6, int parm7, int value ) {
-  Mustang::Cmd cmd;
-  cmd.state_index = MOD_STATE;
-  cmd.parm2 = 0x04;
-  cmd.parm5 = parm5;
-  cmd.parm6 = parm6;
-  cmd.parm7 = parm7;
-  cmd.value = value;
-  
-  return amp->continuous_control( cmd );
+ModCC::continuous_control( int parm5, int parm6, int parm7, int value, unsigned char *cmd ) {
+  cmd[2] = 0x04;
+  memcpy( cmd + 3, model, 2 );
+  cmd[5] = parm5;
+  cmd[6] = parm6;
+  cmd[7] = parm7;
+
+  unsigned short magic = magic_values[value];
+  cmd[9] = magic & 0xff;
+  cmd[10] = (magic >> 8) & 0xff;
+  return 0;
 }
 
 int 
-ModCC::discrete_control( int parm5, int parm6, int parm7, int value ) {
-  Mustang::Cmd cmd;
-  cmd.state_index = MOD_STATE;
-  cmd.parm2 = 0x04;
-  cmd.parm5 = parm5;
-  cmd.parm6 = parm6;
-  cmd.parm7 = parm7;
-  cmd.value = value;
+ModCC::discrete_control( int parm5, int parm6, int parm7, int value, unsigned char *cmd ) {
+  cmd[2] = 0x04;
+  memcpy( cmd + 3, model, 2 );
+  cmd[5] = parm5;
+  cmd[6] = parm6;
+  cmd[7] = parm7;
 
-  return amp->discrete_control( cmd );
+  cmd[9] = value;
+  return 0;
 }
 
 int
-ModCC::dispatch( int cc, int value ) {
+ModCC::dispatch( int cc, int value, unsigned char *cmd ) {
 
   switch ( cc ) {
   case 39:
     // Level / Mix
-    return cc39( value );
+    return cc39( value, cmd );
     break;
   case 40:
     // Rate / Rotor / Freq / Pitch
-    return cc40( value );
+    return cc40( value, cmd );
     break;
   case 41:
     // Depth / Duty Cycle / Resonance / Detune / Heel Freq
-    return cc41( value );
+    return cc41( value, cmd );
     break;
   case 42:
     // Delay / Fdbk / LFO / Min Freq / Feedback / Toe Freq
-    return cc42( value );
+    return cc42( value, cmd );
     break;
   case 43:
     // LR Phase / Release / Tri Shape / PreDelay / High Q 
-    return cc43( value );
+    return cc43( value, cmd );
     break;
   default:
     return 0;

@@ -21,10 +21,8 @@ protected:
   unsigned char model[2];
   unsigned char slot;
 
-  // Only base class is friend of Mustang, so forward calls from
-  // derived classes through these methods.
-  int continuous_control( int parm5, int parm6, int parm7, int value );
-  int discrete_control( int parm5, int parm6, int parm7, int value );
+  int continuous_control( int parm5, int parm6, int parm7, int value, unsigned char *cmd );
+  int discrete_control( int parm5, int parm6, int parm7, int value, unsigned char *cmd );
 
 public:
   AmpCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : 
@@ -34,50 +32,50 @@ public:
     memcpy( this->model, model, 2 );
   }
 
-  int dispatch( int cc, int value );
+  int dispatch( int cc, int value, unsigned char *cmd );
   const unsigned char *getModel( void ) { return model;}
   const unsigned char getSlot( void ) { return slot;}
 
 private:
   // Gain
-  virtual int cc69( int value ) { return continuous_control( 0x01, 0x01, 0x0c, value );}
+  virtual int cc69( int value, unsigned char *cmd ) { return continuous_control( 0x01, 0x01, 0x0c, value, cmd );}
   // Ch. Volume
-  virtual int cc70( int value ) { return continuous_control( 0x00, 0x00, 0x0c, value );}
+  virtual int cc70( int value, unsigned char *cmd ) { return continuous_control( 0x00, 0x00, 0x0c, value, cmd );}
   // Treble
-  virtual int cc71( int value ) { return continuous_control( 0x04, 0x04, 0x0c, value );}
+  virtual int cc71( int value, unsigned char *cmd ) { return continuous_control( 0x04, 0x04, 0x0c, value, cmd );}
   // Mid
-  virtual int cc72( int value ) { return continuous_control( 0x05, 0x05, 0x0c, value );}
+  virtual int cc72( int value, unsigned char *cmd ) { return continuous_control( 0x05, 0x05, 0x0c, value, cmd );}
   // Bass
-  virtual int cc73( int value ) { return continuous_control( 0x06, 0x06, 0x0c, value );}
+  virtual int cc73( int value, unsigned char *cmd ) { return continuous_control( 0x06, 0x06, 0x0c, value, cmd );}
   // Sag
-  virtual int cc74( int value ) { 
-    if ( value > 2 ) return 0;
-    else             return discrete_control( 0x13, 0x13, 0x8f, value );
+  virtual int cc74( int value, unsigned char *cmd ) { 
+    if ( value <= 2 ) return discrete_control( 0x13, 0x13, 0x8f, value, cmd );
+    else              return -1;
   }
   // Bias
-  virtual int cc75( int value ) { return continuous_control( 0x0a, 0x0a, 0x0d, value );}
+  virtual int cc75( int value, unsigned char *cmd ) { return continuous_control( 0x0a, 0x0a, 0x0d, value, cmd );}
   // Noise Gate
-  virtual int cc76( int value ) { 
-    if ( value > 4 ) return 0;
-    else             return discrete_control( 0x0f, 0x0f, 0x90, value );
+  virtual int cc76( int value, unsigned char *cmd ) { 
+    if ( value <= 4 ) return discrete_control( 0x0f, 0x0f, 0x90, value, cmd );
+    else              return -1;
   }
   // Cabinet
-  virtual int cc77( int value ) {
-    if ( value > 12 ) return 0;
-    else              return discrete_control( 0x11, 0x11, 0x8e, value );
+  virtual int cc77( int value, unsigned char *cmd ) {
+    if ( value <= 12 ) return discrete_control( 0x11, 0x11, 0x8e, value, cmd );
+    else               return -1;
   }
 
   // Dummy in base class
-  virtual int cc78( int value ) { return 0;}
-  virtual int cc79( int value ) { return 0;}
+  virtual int cc78( int value, unsigned char *cmd ) { return -1;}
+  virtual int cc79( int value, unsigned char *cmd ) { return -1;}
 
   // Noise Gate Custom Threshold
-  virtual int cc90( int value ) { 
-    if ( value > 9 ) return 0;
-    else             return discrete_control( 0x10, 0x10, 0x86, value );
+  virtual int cc90( int value, unsigned char *cmd ) { 
+    if ( value <= 9 ) return discrete_control( 0x10, 0x10, 0x86, value, cmd );
+    else              return -1;
   }
   // Noise Gate Custom Depth
-  virtual int cc91( int value ) { return continuous_control( 0x09, 0x09, 0x0c, value );}
+  virtual int cc91( int value, unsigned char *cmd ) { return continuous_control( 0x09, 0x09, 0x0c, value, cmd );}
 };
 
 
@@ -89,9 +87,9 @@ public:
   AmpCC1( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : AmpCC(theAmp,model,theSlot) {}
 private:
   // Presence
-  virtual int cc78( int value ) { return continuous_control( 0x07, 0x07, 0x0c, value );}
+  virtual int cc78( int value, unsigned char *cmd ) { return continuous_control( 0x07, 0x07, 0x0c, value, cmd );}
   // Blend
-  virtual int cc79( int value ) { return continuous_control( 0x02, 0x02, 0x0c, value );}
+  virtual int cc79( int value, unsigned char *cmd ) { return continuous_control( 0x02, 0x02, 0x0c, value, cmd );}
 };
   
 
@@ -102,9 +100,9 @@ public:
   AmpCC2( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : AmpCC(theAmp,model,theSlot) {}
 private:
   // Gain2
-  virtual int cc78( int value ) { return continuous_control( 0x02, 0x02, 0x0c, value );}
+  virtual int cc78( int value, unsigned char *cmd ) { return continuous_control( 0x02, 0x02, 0x0c, value, cmd );}
   // Master Volume
-  virtual int cc79( int value ) { return continuous_control( 0x03, 0x03, 0x0c, value );}
+  virtual int cc79( int value, unsigned char *cmd ) { return continuous_control( 0x03, 0x03, 0x0c, value, cmd );}
 };
   
 
@@ -115,9 +113,9 @@ public:
   AmpCC3( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : AmpCC(theAmp,model,theSlot) {}
 private:
   // Cut
-  virtual int cc78( int value ) { return continuous_control( 0x07, 0x07, 0x0c, value );}
+  virtual int cc78( int value, unsigned char *cmd ) { return continuous_control( 0x07, 0x07, 0x0c, value, cmd );}
   // Master Volume
-  virtual int cc79( int value ) { return continuous_control( 0x03, 0x03, 0x0c, value );}
+  virtual int cc79( int value, unsigned char *cmd ) { return continuous_control( 0x03, 0x03, 0x0c, value, cmd );}
 };
   
 
@@ -131,9 +129,9 @@ public:
   AmpCC4( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : AmpCC(theAmp,model,theSlot) {}
 private:
   // Presence
-  virtual int cc78( int value ) { return continuous_control( 0x07, 0x07, 0x0c, value );}
+  virtual int cc78( int value, unsigned char *cmd ) { return continuous_control( 0x07, 0x07, 0x0c, value, cmd );}
   // Master Volume
-  virtual int cc79( int value ) { return continuous_control( 0x03, 0x03, 0x0c, value );}
+  virtual int cc79( int value, unsigned char *cmd ) { return continuous_control( 0x03, 0x03, 0x0c, value, cmd );}
 };
   
 
@@ -144,11 +142,11 @@ public:
   AmpCC5( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : AmpCC(theAmp,model,theSlot) {}
 private:
   // No sag / bias
-  virtual int cc74( int value ) { return 0;}
-  virtual int cc75( int value ) { return 0;}
+  virtual int cc74( int value, unsigned char *cmd ) { return -1;}
+  virtual int cc75( int value, unsigned char *cmd ) { return -1;}
   // No pres / master
-  virtual int cc78( int value ) { return 0;}
-  virtual int cc79( int value ) { return 0;}
+  virtual int cc78( int value, unsigned char *cmd ) { return -1;}
+  virtual int cc79( int value, unsigned char *cmd ) { return -1;}
 };
   
 
@@ -156,10 +154,10 @@ private:
 //
 class AmpCC6 : public AmpCC {
 public:
-  AmpCC6( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : AmpCC(theAmp,model,theSlot) {}
+  AmpCC6( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : AmpCC(theAmp,model,theSlot) {;}
 private:
   // Master Volume
-  virtual int cc79( int value ) { return continuous_control( 0x03, 0x03, 0x0c, value );}
+  virtual int cc79( int value, unsigned char *cmd ) { return continuous_control( 0x03, 0x03, 0x0c, value, cmd );}
 };
   
 
@@ -170,7 +168,7 @@ public:
   AmpCC7( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : AmpCC(theAmp,model,theSlot) {}
 private:
   // Presence
-  virtual int cc78( int value ) { return continuous_control( 0x07, 0x07, 0x0c, value );}
+  virtual int cc78( int value, unsigned char *cmd ) { return continuous_control( 0x07, 0x07, 0x0c, value, cmd );}
 };
   
 
@@ -180,17 +178,17 @@ class NullAmpCC : public AmpCC {
 public:
   NullAmpCC( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : AmpCC(theAmp,model,theSlot) {}
 private:
-  virtual int cc69( int value ) { return 0;}
-  virtual int cc70( int value ) { return 0;}
-  virtual int cc71( int value ) { return 0;}
-  virtual int cc72( int value ) { return 0;}
-  virtual int cc73( int value ) { return 0;}
-  virtual int cc74( int value ) { return 0;}
-  virtual int cc75( int value ) { return 0;}
-  virtual int cc76( int value ) { return 0;}
-  virtual int cc77( int value ) { return 0;}
-  virtual int cc78( int value ) { return 0;}
-  virtual int cc79( int value ) { return 0;}
+  virtual int cc69( int value, unsigned char *cmd ) { return -1;}
+  virtual int cc70( int value, unsigned char *cmd ) { return -1;}
+  virtual int cc71( int value, unsigned char *cmd ) { return -1;}
+  virtual int cc72( int value, unsigned char *cmd ) { return -1;}
+  virtual int cc73( int value, unsigned char *cmd ) { return -1;}
+  virtual int cc74( int value, unsigned char *cmd ) { return -1;}
+  virtual int cc75( int value, unsigned char *cmd ) { return -1;}
+  virtual int cc76( int value, unsigned char *cmd ) { return -1;}
+  virtual int cc77( int value, unsigned char *cmd ) { return -1;}
+  virtual int cc78( int value, unsigned char *cmd ) { return -1;}
+  virtual int cc79( int value, unsigned char *cmd ) { return -1;}
 };
   
 #endif

@@ -20,36 +20,17 @@ class DelayCC;
 class ModCC;
 class StompCC;
 
-class Mustang {
-  friend class AmpCC;
-  friend class ReverbCC;
-  friend class DelayCC;
-  friend class ModCC;
-  friend class StompCC;
-    
-  char preset_names[100][33];
-  unsigned curr_preset_idx;
-  
-  unsigned char dsp_parms[6][64];
 
-  unsigned char curr_model[5][2];
+class Mustang {
 
   unsigned char execute[64];
 
   static const unsigned char state_prefix[];
-  static const unsigned char parms_done[];
-
-  static const unsigned char tuner_ack[];
   static const unsigned char tuner_prefix[];
-
-  static const unsigned char select_ack[];
-  static const unsigned char cc_ack[];
   
   libusb_device_handle *usb_io;
 
   pthread_t worker;
-
-  pthread_mutex_t data_lock = PTHREAD_MUTEX_INITIALIZER;
 
   pthread_mutex_t shutdown_lock = PTHREAD_MUTEX_INITIALIZER;
   bool want_shutdown;
@@ -66,14 +47,36 @@ class Mustang {
     }
   };
 
-  // Manage access to each DSP block 
-  Condition<bool> dsp_sync[5];
-
   Condition<bool> preset_names_sync;
+  char preset_names[100][33];
+  unsigned curr_preset_idx;
+
+  // Manage access to each DSP block 
+  Condition<bool> dsp_sync[6];
+  unsigned char dsp_parms[6][64];
+
+  // Received {0x1c, 0x01, 0x00, ...}
+  Condition<bool> cc_ack_eom;
+
+  // Received {0x00, 0x00, 0x19, ... }
+  Condition<bool> efx_toggle_sync;
+  static const unsigned char efx_toggle_ack[];
 
   // Synchronize init on end of initial parm dump
   Condition<bool> parm_read_sync;
+  static const unsigned char parm_read_ack[];
 
+  // Synchronize on receipt of model change acknowledge
+  Condition<bool> model_change_sync;
+  static const unsigned char model_change_ack[];
+
+  // Synchronize on receipt of control change acknowledge
+  Condition<bool> cc_ack_sync;
+  static const unsigned char cc_ack[];
+
+  Condition<bool> tuner_ack_sync;
+  static const unsigned char tuner_ack[];
+  
   struct usb_id {
     // product id
     int pid;
@@ -87,31 +90,24 @@ class Mustang {
   static const usb_id amp_ids[];
   bool isV2;
 
-  static void *threadStarter( void * );
-  void handleInput( void );
-
   bool tuner_active;
 
   AmpCC * curr_amp;
-  ReverbCC * curr_reverb;
-  DelayCC * curr_delay;
-  ModCC * curr_mod;
+
   StompCC * curr_stomp;
+  ModCC * curr_mod;
+  DelayCC * curr_delay;
+  ReverbCC * curr_reverb;
 
-public:  
-  struct Cmd {
-    int state_index;
-    int parm2;
-    int parm5;
-    int parm6;
-    int parm7;
-    int value;
-  };
+  static void *threadStarter( void * );
+  void handleInput( void );
 
-private:
-  int continuous_control( const Mustang::Cmd & cmd );
-  int discrete_control( const Mustang::Cmd & cmd );
+  int direct_control( unsigned char *cmd );
   
+  int sendCmd( unsigned char *buffer );
+  int requestDump( void );
+  int executeModelChange( unsigned char *buffer );
+
   void updateAmpObj( const unsigned char *data );
   void updateStompObj( const unsigned char *data );
   void updateReverbObj( const unsigned char *data );
@@ -132,22 +128,25 @@ public:
   int commShutdown( void );
 
   int setAmp( int ord );
-  int setReverb( int ord );
-  int setDelay( int ord );
-  int setMod( int ord );
+  int ampControl( int cc, int value );
+
   int setStomp( int ord );
+  int stompControl( int cc, int value );
+
+  int setMod( int ord );
+  int modControl( int cc, int value );
+
+  int setDelay( int ord );
+  int delayControl( int cc, int value );
+
+  int setReverb( int ord );
+  int reverbControl( int cc, int value );
 
   int tunerMode( int value );
     
   int patchChange( int );
 
   int effectToggle( int cc, int value );
-
-  AmpCC * getAmp( void ) { return curr_amp;}
-  ReverbCC * getReverb( void ) { return curr_reverb;}
-  DelayCC * getDelay( void ) { return curr_delay;}
-  ModCC * getMod( void ) { return curr_mod;}
-  StompCC * getStomp( void ) { return curr_stomp;}
 };
 
 

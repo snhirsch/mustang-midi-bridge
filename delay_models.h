@@ -1,6 +1,8 @@
 #ifndef DELAY_MODELS_H
 #define DELAY_MODELS_H
 
+extern const unsigned char null_dly_id[];
+
 extern const unsigned char mono_dly_id[];
 extern const unsigned char mono_filter_id[];
 extern const unsigned char st_filter_id[];

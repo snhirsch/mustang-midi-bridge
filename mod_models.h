@@ -3,6 +3,8 @@
 #ifndef MOD_MODELS_H
 #define MOD_MODELS_H
 
+extern const unsigned char null_mod_id[];
+
 extern const unsigned char sine_chorus_id[];
 extern const unsigned char tri_chorus_id[];
 extern const unsigned char sine_flange_id[];

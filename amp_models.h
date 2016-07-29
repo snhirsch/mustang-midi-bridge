@@ -1,6 +1,8 @@
 #ifndef AMP_MODELS_H
 #define AMP_MODELS_H
 
+extern const unsigned char null_amp_id[];
+
 extern const unsigned char f57_deluxe_id[];
 extern const unsigned char f59_bassman_id[];
 extern const unsigned char f57_champ_id[];
