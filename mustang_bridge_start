@@ -19,6 +19,11 @@ control_pid = 0x0160
 
 # Mustang USB parms
 mustang_vid = 0x1ed8
+
+# Mustang III (original)
+# mustang_pid = 0x0005
+
+# Mustang III v2
 mustang_pid = 0x0016
 
 # Controller MIDI device
