@@ -24,9 +24,6 @@ class StompCC;
 class Mustang {
 
   unsigned char execute[64];
-
-  static const unsigned char state_prefix[];
-  static const unsigned char tuner_prefix[];
   
   libusb_device_handle *usb_io;
 
@@ -47,22 +44,31 @@ class Mustang {
     }
   };
 
+  // Synchronize access to preset names
   Condition<bool> preset_names_sync;
   char preset_names[100][33];
+
+  // Index to current preset 
   unsigned curr_preset_idx;
 
-  // Manage access to each DSP block 
+  // Identify DSP-specific response family
+  static const unsigned char state_prefix[];
+
+  // Manage access to each DSP block and/of associated
+  // object.
   Condition<bool> dsp_sync[6];
   unsigned char dsp_parms[6][64];
 
   // Received {0x1c, 0x01, 0x00, ...}
+  // --> End of preset select acknowledge stream
   Condition<bool> cc_ack_eom;
 
   // Received {0x00, 0x00, 0x19, ... }
+  // --> Acknowledge efx on/off toggle
   Condition<bool> efx_toggle_sync;
   static const unsigned char efx_toggle_ack[];
 
-  // Synchronize init on end of initial parm dump
+  // Synchronize on end of parm dump
   Condition<bool> parm_read_sync;
   static const unsigned char parm_read_ack[];
 
@@ -70,10 +76,11 @@ class Mustang {
   Condition<bool> model_change_sync;
   static const unsigned char model_change_ack[];
 
-  // Synchronize on receipt of control change acknowledge
+  // Synchronize on receipt of direct control acknowledge
   Condition<bool> cc_ack_sync;
   static const unsigned char cc_ack[];
 
+  // Sync on tuner on/off ack
   Condition<bool> tuner_ack_sync;
   static const unsigned char tuner_ack[];
   

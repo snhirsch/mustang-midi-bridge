@@ -2,27 +2,26 @@
 
 #include <cstdio>
 #include <unistd.h>
-#include <cmath>
-
-#include "magic.h"
-
-#include "amp.h"
-#include "reverb.h"
-#include "delay.h"
-#include "mod.h"
-#include "stomp.h"
-
-#include "amp_defaults.h"
-#include "reverb_defaults.h"
-#include "delay_defaults.h"
-#include "mod_defaults.h"
-#include "stomp_defaults.h"
 
 #include "amp_models.h"
+#include "amp_defaults.h"
+#include "amp.h"
+
 #include "stomp_models.h"
+#include "stomp_defaults.h"
+#include "stomp.h"
+
 #include "mod_models.h"
+#include "mod_defaults.h"
+#include "mod.h"
+
 #include "delay_models.h"
+#include "delay_defaults.h"
+#include "delay.h"
+
 #include "reverb_models.h"
+#include "reverb_defaults.h"
+#include "reverb.h"
 
 // Parameter report (preset names + DSP states)
 const unsigned char Mustang::state_prefix[] = { 0x1c, 0x01 };
@@ -32,9 +31,6 @@ const unsigned char Mustang::parm_read_ack[] = { 0xff, 0x01 };
 
 // Acknowledge tuner toggle
 const unsigned char Mustang::tuner_ack[] = { 0x0a, 0x01 };
-
-// Tuner display update 
-const unsigned char Mustang::tuner_prefix[] = { 0x0b, 0x01 };
 
 // Acknowledge model-select 
 const unsigned char Mustang::model_change_ack[] = { 0x00, 0x00, 0x1c };
@@ -94,9 +90,8 @@ Mustang::handleInput( void ) {
     if ( finished ) break;
 
     if ( rc!=0 ) {
-      // Retry on timeout, otherwise exit
-      if ( rc==LIBUSB_ERROR_TIMEOUT ) continue;
-      else                            break;
+      // Always retry on timeout since we expect it.  Otherwise exit
+      if ( rc!=LIBUSB_ERROR_TIMEOUT ) break;
     }
 
     // Retry on short read
@@ -112,11 +107,12 @@ Mustang::handleInput( void ) {
       // Only care about amp state messages, and not even all of them...
       int dsp_category = read_buf[2];
       switch( dsp_category ) {
+        // Response for DSP data and/or patch-change
+        //
         case 0x00:
         {
-          // Patch change report done
+          // Patch change acknowledge sequence done
           pthread_mutex_lock( &cc_ack_eom.lock );
-
           cc_ack_eom.value = true;
           pthread_cond_signal( &cc_ack_eom.cond );
           pthread_mutex_unlock( &cc_ack_eom.lock );
@@ -135,8 +131,8 @@ Mustang::handleInput( void ) {
           // parm dump or when manual patch change occurs.
           curr_preset_idx = idx;
 
-          preset_names_sync.value = true;
-          pthread_cond_signal( &preset_names_sync.cond );
+          // preset_names_sync.value = true;
+          // pthread_cond_signal( &preset_names_sync.cond );
           pthread_mutex_unlock( &preset_names_sync.lock );
           break;
         }
@@ -150,8 +146,8 @@ Mustang::handleInput( void ) {
           memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
           updateAmpObj( read_buf );
 
-          dsp_sync[idx].value = true;
-          pthread_cond_signal( &dsp_sync[idx].cond );
+          // dsp_sync[idx].value = true;
+          // pthread_cond_signal( &dsp_sync[idx].cond );
           pthread_mutex_unlock( &dsp_sync[idx].lock );
           break;
         }
@@ -164,8 +160,8 @@ Mustang::handleInput( void ) {
           memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
           updateStompObj( read_buf );
 
-          dsp_sync[idx].value = true;
-          pthread_cond_signal( &dsp_sync[idx].cond );
+          // dsp_sync[idx].value = true;
+          // pthread_cond_signal( &dsp_sync[idx].cond );
           pthread_mutex_unlock( &dsp_sync[idx].lock );
           break;
         }
@@ -178,8 +174,8 @@ Mustang::handleInput( void ) {
           memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
           updateModObj( read_buf );
           
-          dsp_sync[idx].value = true;
-          pthread_cond_signal( &dsp_sync[idx].cond );
+          // dsp_sync[idx].value = true;
+          // pthread_cond_signal( &dsp_sync[idx].cond );
           pthread_mutex_unlock( &dsp_sync[idx].lock );
           break;
         }
@@ -192,8 +188,8 @@ Mustang::handleInput( void ) {
           memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
           updateDelayObj( read_buf );
           
-          dsp_sync[idx].value = true;
-          pthread_cond_signal( &dsp_sync[idx].cond );
+          // dsp_sync[idx].value = true;
+          // pthread_cond_signal( &dsp_sync[idx].cond );
           pthread_mutex_unlock( &dsp_sync[idx].lock );
           break;
         }
@@ -206,8 +202,8 @@ Mustang::handleInput( void ) {
           memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
           updateReverbObj( read_buf );
           
-          dsp_sync[idx].value = true;
-          pthread_cond_signal( &dsp_sync[idx].cond );
+          // dsp_sync[idx].value = true;
+          // pthread_cond_signal( &dsp_sync[idx].cond );
           pthread_mutex_unlock( &dsp_sync[idx].lock );
           break;
         }
@@ -219,8 +215,8 @@ Mustang::handleInput( void ) {
 
           memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
 
-          dsp_sync[idx].value = true;
-          pthread_cond_signal( &dsp_sync[idx].cond );
+          // dsp_sync[idx].value = true;
+          // pthread_cond_signal( &dsp_sync[idx].cond );
           pthread_mutex_unlock( &dsp_sync[idx].lock );
           break;
         }
@@ -230,41 +226,36 @@ Mustang::handleInput( void ) {
       }
     }
     else if ( 0==memcmp(read_buf,model_change_ack,3) ) {
-      // Received acknowledge of model change
+      // Model change acknowledge
       pthread_mutex_lock( &model_change_sync.lock );
-
       model_change_sync.value = true;
       pthread_cond_signal( &model_change_sync.cond );
       pthread_mutex_unlock( &model_change_sync.lock );
     }
     else if ( 0==memcmp(read_buf,cc_ack,3) ){
-      // CC command acknowledged
+      // Direct command acknowledge
       pthread_mutex_lock( &cc_ack_sync.lock );
-
       cc_ack_sync.value = true;
       pthread_cond_signal( &cc_ack_sync.cond );
       pthread_mutex_unlock( &cc_ack_sync.lock );
     }
     else if ( 0==memcmp(read_buf,efx_toggle_ack,3) ){
-      // EFX Toggle acknowledged
+      // EFX toggle acknowledge
       pthread_mutex_lock( &efx_toggle_sync.lock );
-
       efx_toggle_sync.value = true;
       pthread_cond_signal( &efx_toggle_sync.cond );
       pthread_mutex_unlock( &efx_toggle_sync.lock );
     }
     else if ( 0==memcmp(read_buf,parm_read_ack,2) ){
-      // Parameter dump complete, notify main thread
+      // Parameter dump completion acknowledge
       pthread_mutex_lock( &parm_read_sync.lock );
-
       parm_read_sync.value = true;
       pthread_cond_signal( &parm_read_sync.cond );
       pthread_mutex_unlock( &parm_read_sync.lock );
     }
     else if ( 0==memcmp(read_buf,tuner_ack,2) ){
-      // Parameter dump complete, notify main thread
+      // Tuner toggle acknowledge
       pthread_mutex_lock( &tuner_ack_sync.lock );
-
       tuner_ack_sync.value = true;
       pthread_cond_signal( &tuner_ack_sync.cond );
       pthread_mutex_unlock( &tuner_ack_sync.lock );
@@ -381,7 +372,8 @@ Mustang::commStart( void ) {
   // Mark as running
   want_shutdown = false;
 
-  // Lock the flag 
+  ///// Critical Section
+  //
   pthread_mutex_lock( &parm_read_sync.lock );
   parm_read_sync.value = false;
 
@@ -394,11 +386,12 @@ Mustang::commStart( void ) {
   buffer[1] = 0xc1;
 
   rc = sendCmd( buffer );
-  if ( rc!=0 ) return rc;
 
   // Block until background thread tells us it's done
-  while ( !parm_read_sync.value ) pthread_cond_wait( &parm_read_sync.cond, &parm_read_sync.lock );
+  while ( rc==0 && !parm_read_sync.value ) pthread_cond_wait( &parm_read_sync.cond, &parm_read_sync.lock );
   pthread_mutex_unlock( &parm_read_sync.lock );
+  //
+  /////
 
   return 0;
 }
@@ -440,21 +433,23 @@ Mustang::requestDump( void ) {
   int rc;
   unsigned char buffer[64];
 
-  // Lock the flag 
+  ///// Critical Section
+  //
   pthread_mutex_lock( &parm_read_sync.lock );
-  parm_read_sync.value = false;
   
   // Request parm dump
   memset( buffer, 0, 64 );
   buffer[0] = 0xff;
   buffer[1] = 0xc1;
 
+  parm_read_sync.value = false;
   rc = sendCmd( buffer );
-  if ( rc!=0 ) return rc;
 
   // Block until background thread tells us it's done
-  while ( !parm_read_sync.value ) pthread_cond_wait( &parm_read_sync.cond, &parm_read_sync.lock );
+  while ( rc==0 && !parm_read_sync.value ) pthread_cond_wait( &parm_read_sync.cond, &parm_read_sync.lock );
   pthread_mutex_unlock( &parm_read_sync.lock );
+  //
+  //////
 
 #ifdef DEBUG
   fprintf( stderr, "DEBUG: Parm dump completion acknowledged\n" );
@@ -469,26 +464,20 @@ Mustang::executeModelChange( unsigned char *buffer ) {
   // 5..9 --> 0..4
   int idx = buffer[2] - 5;
 
-  /////// CRITICAL
+  /////// Critical Section 1
   //
   pthread_mutex_lock( &model_change_sync.lock );
 
   // Setup amp personality
   model_change_sync.value = false;
-
   int rc = sendCmd( buffer );
-  if ( rc!=0 ) return rc;
-  
-  // Sync on resonse
-  while ( !model_change_sync.value ) pthread_cond_wait( &model_change_sync.cond, &model_change_sync.lock );
+  while ( rc==0 && !model_change_sync.value ) pthread_cond_wait( &model_change_sync.cond, &model_change_sync.lock );
 
   // Execute command
   model_change_sync.value = false;
-
   rc = sendCmd( execute );
-  if ( rc!=0 ) return rc;
+  while ( rc==0 && !model_change_sync.value ) pthread_cond_wait( &model_change_sync.cond, &model_change_sync.lock );
 
-  while ( !model_change_sync.value ) pthread_cond_wait( &model_change_sync.cond, &model_change_sync.lock );
   pthread_mutex_unlock( &model_change_sync.lock );
   //
   //////
@@ -497,6 +486,8 @@ Mustang::executeModelChange( unsigned char *buffer ) {
   fprintf( stderr, "DEBUG: Model change acknowledged\n" );
 #endif
 
+  ///// Critical Section 2
+  //
   // Lock the DSP device and update for what we just sent
   pthread_mutex_lock( &dsp_sync[idx].lock );
 
@@ -527,6 +518,8 @@ Mustang::executeModelChange( unsigned char *buffer ) {
       break;
   }
   pthread_mutex_unlock( &dsp_sync[idx].lock );
+  //
+  ///////
 
 #ifdef DEBUG
   fprintf( stderr, "DEBUG: State updated\n" );
@@ -1183,6 +1176,7 @@ Mustang::effectToggle(int cc, int value) {
   unsigned char buffer[64];
   memset(buffer, 0x00, 64);
 
+  // Logic is inverted ==> 0 is 'on'
   int toggle;
   if      ( value >= 0 && value <= 63 )  toggle = 1;
   else if ( value > 63 && value <= 127 ) toggle = 0;
@@ -1193,15 +1187,14 @@ Mustang::effectToggle(int cc, int value) {
   // Translate 23..26 --> 3..6 (EFX family)
   int family = cc - 20;
   buffer[2] = family;
-
-  // Invert logic
   buffer[3] = toggle;
+
+  ///// Critical Section
+  //
+  pthread_mutex_lock( &efx_toggle_sync.lock );
 
   // Translate 23..26 --> 1..4 (index into dsp parms array)
   int state_index = cc - 22;
-
-  pthread_mutex_lock( &efx_toggle_sync.lock );
- 
   unsigned char slot;
   switch ( state_index ) {
     case 1:
@@ -1220,11 +1213,12 @@ Mustang::effectToggle(int cc, int value) {
   buffer[4] = slot;
 
   efx_toggle_sync.value = false;
-
   int rc = sendCmd( buffer );
+  while ( rc==0 && ! efx_toggle_sync.value ) pthread_cond_wait( &efx_toggle_sync.cond, &efx_toggle_sync.lock );
 
-  while ( ! efx_toggle_sync.value ) pthread_cond_wait( &efx_toggle_sync.cond, &efx_toggle_sync.lock );
   pthread_mutex_unlock( &efx_toggle_sync.lock );
+  //
+  /////
 
 #ifdef DEBUG
   fprintf( stderr, "DEBUG: Efx toggle done\n" );
@@ -1239,14 +1233,17 @@ Mustang::direct_control( unsigned char *buffer ) {
   buffer[0] = 0x05;
   buffer[1] = 0xc3;
 
+  ///// Critical Section
+  //
   pthread_mutex_lock( &cc_ack_sync.lock );
-  cc_ack_sync.value = false;
-  
-  int rc = sendCmd( buffer );
-  if ( rc!=0 ) return rc;
 
-  while ( ! cc_ack_sync.value ) pthread_cond_wait( &cc_ack_sync.cond, &cc_ack_sync.lock );
+  cc_ack_sync.value = false;
+  int rc = sendCmd( buffer );
+  while ( rc==0 && ! cc_ack_sync.value ) pthread_cond_wait( &cc_ack_sync.cond, &cc_ack_sync.lock );
+
   pthread_mutex_unlock( &cc_ack_sync.lock );
+  //
+  //////
 
 #ifdef DEBUG
   fprintf( stderr, "DEBUG: Direct control done\n" );
@@ -1269,16 +1266,28 @@ Mustang::patchChange( int patch ) {
   buffer[4] = patch;
   buffer[6] = 0x01;
 
+  ////// Critical Section
+  //
   pthread_mutex_lock( &cc_ack_eom.lock );
+
   cc_ack_eom.value = false;
-
   int rc = sendCmd( buffer );
+  while ( rc==0 && ! cc_ack_eom.value ) pthread_cond_wait( &cc_ack_eom.cond, &cc_ack_eom.lock );
 
-  while ( ! cc_ack_eom.value ) pthread_cond_wait( &cc_ack_eom.cond, &cc_ack_eom.lock );
   pthread_mutex_unlock( &cc_ack_eom.lock );
 
 #ifdef DEBUG
   fprintf( stderr, "DEBUG: Leaving patch change\n" );
+#endif
+
+  pthread_mutex_lock( &preset_names_sync.lock );
+  curr_preset_idx = patch;
+  pthread_mutex_unlock( &preset_names_sync.lock );
+  //
+  ///////
+
+#ifdef DEBUG
+  fprintf( stderr, "DEBUG: Updated current preset index\n" );
 #endif
 
   return rc;
@@ -1298,27 +1307,31 @@ Mustang::tunerMode( int value ) {
   bool want_active = ((value > 63) && (value <= 127)) ? true : false;
   if ( want_active == tuner_active ) return 0;
 
+  ////// Critical Section
+  //
   pthread_mutex_lock( &tuner_ack_sync.lock );
-  tuner_ack_sync.value = false;
 
+  tuner_ack_sync.value = false;
   if ( want_active  ) {
     // Tuner on
     buffer[2] = buffer[3] = buffer[4] = 0x01;
     rc = sendCmd( buffer );
-    if ( rc!=0 ) return rc;
-    
-    tuner_active = true;
+    if ( rc==0 ) {
+      while ( ! tuner_ack_sync.value ) pthread_cond_wait( &tuner_ack_sync.cond, &tuner_ack_sync.lock );
+      tuner_active = true;
+    }
   }
   else {
     // Tuner off
     rc = sendCmd( buffer );
-    if ( rc!=0 ) return rc;
-
-    tuner_active = false;
+    if ( rc==0 ) {
+      while ( ! tuner_ack_sync.value ) pthread_cond_wait( &tuner_ack_sync.cond, &tuner_ack_sync.lock );
+      tuner_active = false;
+    }
   }
-
-  while ( ! tuner_ack_sync.value ) pthread_cond_wait( &tuner_ack_sync.cond, &tuner_ack_sync.lock );
   pthread_mutex_unlock( &tuner_ack_sync.lock );
+  //
+  //////
 
 #ifdef DEBUG
   fprintf( stderr, "DEBUG: Done tuner toggle\n" );
