@@ -53,7 +53,7 @@ Special thanks to:
   + The original developer and contributors to 'PLUG' who blazed the
   path with reverse-engineering of Fender's communication scheme.
 
-  + Robert Jannsson (Codesmart on VGuitar Forums) for feedback and
+  + Robert Fransson (Codesmart on VGuitar Forums) for feedback and
   encouragement - and for being a tireless programming wizard :-).
 
   + Robert Heitman, author of the Android 'Remuda' application for
