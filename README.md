@@ -5,14 +5,18 @@ messages
 
 # What's New
 
+Complete rewrite and restructure of code based on ever-increasing
+familiarity with the Mustang communication protocol and API.  The
+bridge code is now fully mulithreaded.  A persistent background thread
+is constantly listening to incoming traffic from the amp and updating
+shared data as necessary.  This greatly increases stability and makes
+the bridge tolerant of manual adjustments on the amplifier while
+nominally under MIDI control.  In particular, it is now possible to
+engage the tuner function on the amp without ill side-effects.
+
 The command line parameter for MIDI controller port is now assumed to
 start at 0 rather than 1 in order to match the way Linux ALSA
 enumerates devices (see 'Run' below).
-
-The program has been updated to run as a non-privileged daemon
-process. You can still invoke it on the command line, but there will
-be no output to the console and it no longer responds to keypress
-input. Enter Ctrl-C (SIGINT) to exit.
 
 I have added the first version of a runtime framework that starts and
 stops the program automatically based on attached MIDI devices. This
@@ -23,16 +27,20 @@ interface. Technically oriented users can probably work this out,
 otherwise wait a bit until I can refine the packaging and arrange to
 have the various pieces configured from a common setup file.
 
+You can still invoke the bridge on the command line, but there will be
+no output to the console and it no longer responds to keypress
+input. Enter Ctrl-C (SIGINT) to exit.
+
 Support added for amp and effects models specific to the Mustang v2
 products.  This has had only limited testing.
 
-Added a python script to exercise the bridge.  
+Added a python script to drive regression testing.
 
 # Introduction
 
-The intent is to implement the published MIDI spec for the Fender
-Mustang Floor pedal with whatever extensions are necessary to expose
-features added to the 'v2' series. 
+Mustang bridge implements about 99% of the published MIDI spec for the
+Fender Mustang Floor pedal with extensions to support features added
+to the 'v2' series.
 
 I am developing on a Ubuntu Precise desktop machine, but the code is
 routinely tested on a Raspberry Pi 'B' and Beagelbone Green to ensure
@@ -40,8 +48,17 @@ these remain viable deployment targets.  At this point I'm still
 experiencing issues with USB latency on the RPi and am currently
 recommending the BBG for real-world use.
 
-A special thanks to the original developer and contributors to 'PLUG',
-from whence the Mustang USB interface code is stolen.
+Special thanks to:
+
+  + The original developer and contributors to 'PLUG' who blazed the
+  path with reverse-engineering of Fender's communication scheme.
+
+  + Robert Jannsson (Codesmart on VGuitar Forums) for feedback and
+  encouragement - and for being a tireless programming wizard :-).
+
+  + Robert Heitman, author of the Android 'Remuda' application for
+  Mustang amp control, who provided valuable insights into various
+  subtleties that would have otherwise escaped me.
 
 ## For the non-techies
 
@@ -59,28 +76,21 @@ appreciated if I've omitted or glossed over something critical.
 The Mustang Floor MIDI spec is about 99% implemented, with only the
 following exceptions:
 
-  + Tuner On/Off
-
-    Will require substantial rework of the program to make this work
-    reliably.  
-
   + Amp Bypass
 
     It's possible to turn the amp "off" with CC#68 0, but this mutes
-    all sound rather than acting as a bypass.  I don't think the combo
-    amps support signal bypass, but haven't given up yet.
+    all sound rather than acting as a bypass.  It appears that the
+    combo amps do not support the notion of straight-through routing
+    without an amplifier modeling block.
 
   + Pedal Volume
 
-    I'm not sure why this is needed, since all continuous controllers
-    are directly accessible through CC messages.  Since the FUSE
-    application cannot issue these commands it will be guesswork to
-    figure out the protocol - if it's even supported on the combo
-    amps. 
+    I'm not sure why this would even be needed, since all continuous
+    controllers are directly accessible through CC messages.
 
   + FX Insert
 
-    Not supported on the combo amps
+    Not supported on the combo amps.
 
   + Tap Tempo
 
@@ -101,6 +111,20 @@ and luck to figure out the protocol.
     - libusb-1.0-0-dev
     - libjack0 (Precise) 
     - libjackQ (Jessie)
+
+  + If you want to run the regression tests, you'll also need:
+
+    - python2.7
+    - python2.7-dev
+    - python-pip
+    - 'Mido' Python MIDI extension
+    - Python rtmidi extension
+
+    'mido' and rtmidi are not available as a DEB package and must be
+    installed using 'pip':
+
+    $ pip install --pre python-rtmidi
+    $ pip install mido
 
 Would appreciate feedback on requirements for other distributions.
 
