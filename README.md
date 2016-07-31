@@ -124,6 +124,7 @@ and luck to figure out the protocol.
     installed using 'pip':
 
     $ pip install --pre python-rtmidi
+
     $ pip install mido
 
 Would appreciate feedback on requirements for other distributions.
