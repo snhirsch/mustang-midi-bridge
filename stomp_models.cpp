@@ -10,9 +10,9 @@ const unsigned char fuzz_twah_id[]   = { 0x1c, 0x00 };
 const unsigned char simple_comp_id[] = { 0x88, 0x00 };
 const unsigned char comp_id[]        = { 0x07, 0x00 };
 
-const unsigned char range_boost_id[] = { 0x03, 0x00 };
+const unsigned char range_boost_id[] = { 0x03, 0x01 };
 const unsigned char green_box_id[]   = { 0xba, 0x00 };
-const unsigned char orange_box_id[]  = { 0x10, 0x00 };
-const unsigned char black_box_id[]   = { 0x11, 0x00 };
-const unsigned char big_fuzz_id[]    = { 0x0f, 0x00 };
+const unsigned char orange_box_id[]  = { 0x10, 0x01 };
+const unsigned char black_box_id[]   = { 0x11, 0x01 };
+const unsigned char big_fuzz_id[]    = { 0x0f, 0x01 };
 
