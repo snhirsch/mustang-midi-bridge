@@ -29,7 +29,7 @@ const unsigned char Mustang::state_prefix[] = { 0x1c, 0x01 };
 // End of full parameter dump
 const unsigned char Mustang::parm_read_ack[] = { 0xff, 0x01 };
 
-// Acknowledge tuner toggle
+// Acknowledge tuner change
 const unsigned char Mustang::tuner_ack[] = { 0x0a, 0x01 };
 
 // Acknowledge model-select 
@@ -60,7 +60,8 @@ Mustang::Mustang( void ) {
   execute[0] = 0x1c;
   execute[1] = 0x03;
 
-  tuner_active = false;
+  // So far, this is the only state flag we need to pre-condition
+  tuner_ack_sync.value = false;
 }
 
 
@@ -254,9 +255,9 @@ Mustang::handleInput( void ) {
       pthread_mutex_unlock( &parm_read_sync.lock );
     }
     else if ( 0==memcmp(read_buf,tuner_ack,2) ){
-      // Tuner toggle acknowledge
+      // Tuner toggle notify
       pthread_mutex_lock( &tuner_ack_sync.lock );
-      tuner_ack_sync.value = true;
+      tuner_ack_sync.value = read_buf[2]==0x01 ? true : false;
       pthread_cond_signal( &tuner_ack_sync.cond );
       pthread_mutex_unlock( &tuner_ack_sync.lock );
     }
@@ -585,7 +586,7 @@ Mustang::updateAmpObj( const unsigned char *data ) {
 
 int 
 Mustang::setAmp( int ord ) {
-  if ( tuner_active ) return 0;
+  if ( checkOrDisableTuner() < 0 ) return -1;
   unsigned char *buffer;
 
   switch (ord) {
@@ -663,7 +664,7 @@ Mustang::setAmp( int ord ) {
 
 int
 Mustang::ampControl( int cc, int value ) {
-  if ( tuner_active ) return 0;
+  if ( checkOrDisableTuner() < 0 ) return -1;
 
   unsigned char cmd[64];
   memset( cmd, 0, 64 );
@@ -736,7 +737,8 @@ Mustang::updateStompObj( const unsigned char *data ) {
 
 int 
 Mustang::setStomp( int ord ) {
-  if ( tuner_active ) return 0;
+  if ( checkOrDisableTuner() < 0 ) return -1;
+
   unsigned char *buffer;
 
   switch (ord) {
@@ -809,7 +811,7 @@ Mustang::setStomp( int ord ) {
 
 int
 Mustang::stompControl( int cc, int value ) {
-  if ( tuner_active ) return 0;
+  if ( checkOrDisableTuner() < 0 ) return -1;
 
   unsigned char cmd[64];
   memset( cmd, 0, 64 );
@@ -882,7 +884,7 @@ Mustang::updateModObj( const unsigned char *data ) {
 
 int 
 Mustang::setMod( int ord ) {
-  if ( tuner_active ) return 0;
+  if ( checkOrDisableTuner() < 0 ) return -1;
   unsigned char *buffer;
 
   switch (ord) {
@@ -955,7 +957,7 @@ Mustang::setMod( int ord ) {
 
 int
 Mustang::modControl( int cc, int value ) {
-  if ( tuner_active ) return 0;
+  if ( checkOrDisableTuner() < 0 ) return -1;
 
   unsigned char cmd[64];
   memset( cmd, 0, 64 );
@@ -1019,7 +1021,7 @@ Mustang::updateDelayObj( const unsigned char *data ) {
 
 int 
 Mustang::setDelay( int ord ) {
-  if ( tuner_active ) return 0;
+  if ( checkOrDisableTuner() < 0 ) return -1;
   unsigned char *buffer;
 
   switch (ord) {
@@ -1068,7 +1070,7 @@ Mustang::setDelay( int ord ) {
 
 int
 Mustang::delayControl( int cc, int value ) {
-  if ( tuner_active ) return 0;
+  if ( checkOrDisableTuner() < 0 ) return -1;
 
   unsigned char cmd[64];
   memset( cmd, 0, 64 );
@@ -1102,7 +1104,7 @@ Mustang::updateReverbObj( const unsigned char *data ) {
 
 int 
 Mustang::setReverb( int ord ) {
-  if ( tuner_active ) return 0;
+  if ( checkOrDisableTuner() < 0 ) return -1;
   unsigned char *buffer;
 
   switch (ord) {
@@ -1154,7 +1156,7 @@ Mustang::setReverb( int ord ) {
 
 int
 Mustang::reverbControl( int cc, int value ) {
-  if ( tuner_active ) return 0;
+  if ( checkOrDisableTuner() < 0 ) return -1;
 
   unsigned char cmd[64];
   memset( cmd, 0, 64 );
@@ -1171,7 +1173,7 @@ Mustang::reverbControl( int cc, int value ) {
 
 int 
 Mustang::effectToggle(int cc, int value) {
-  if ( tuner_active ) return 0;
+  if ( checkOrDisableTuner() < 0 ) return -1;
 
   unsigned char buffer[64];
   memset(buffer, 0x00, 64);
@@ -1255,7 +1257,7 @@ Mustang::direct_control( unsigned char *buffer ) {
 
 int 
 Mustang::patchChange( int patch ) {
-  if ( tuner_active ) return 0;
+  if ( checkOrDisableTuner() < 0 ) return -1;
 
   unsigned char buffer[64];
   memset(buffer, 0x00, 64);
@@ -1294,6 +1296,34 @@ Mustang::patchChange( int patch ) {
 }
 
 
+int
+Mustang::checkOrDisableTuner( void ) {
+  int rc = 0;
+  
+  ////// Critical Section
+  //
+  pthread_mutex_lock( &tuner_ack_sync.lock );
+
+  // If tuner on, disable it
+  if ( true==tuner_ack_sync.value ) {
+    unsigned char buffer[64];
+    memset(buffer, 0x00, 64);
+    buffer[0] = 0x0a;
+    buffer[1] = 0x01;
+
+    rc = sendCmd( buffer );
+    if ( rc==0 ) {
+      while ( true==tuner_ack_sync.value ) pthread_cond_wait( &tuner_ack_sync.cond, &tuner_ack_sync.lock );
+    }
+  }
+  pthread_mutex_unlock( &tuner_ack_sync.lock );
+  //
+  //////
+
+  return rc;
+}
+
+
 int 
 Mustang::tunerMode( int value ) {
   int rc;
@@ -1304,29 +1334,23 @@ Mustang::tunerMode( int value ) {
   buffer[0] = 0x0a;
   buffer[1] = 0x01;
 
-  bool want_active = ((value > 63) && (value <= 127)) ? true : false;
-  if ( want_active == tuner_active ) return 0;
-
   ////// Critical Section
   //
   pthread_mutex_lock( &tuner_ack_sync.lock );
 
-  tuner_ack_sync.value = false;
-  if ( want_active  ) {
+  if ( value>63 && value<=127 && false==tuner_ack_sync.value ) {
     // Tuner on
     buffer[2] = buffer[3] = buffer[4] = 0x01;
     rc = sendCmd( buffer );
     if ( rc==0 ) {
-      while ( ! tuner_ack_sync.value ) pthread_cond_wait( &tuner_ack_sync.cond, &tuner_ack_sync.lock );
-      tuner_active = true;
+      while ( false==tuner_ack_sync.value ) pthread_cond_wait( &tuner_ack_sync.cond, &tuner_ack_sync.lock );
     }
   }
-  else {
+  else if ( value>=0 && value<=63 && true==tuner_ack_sync.value ) {
     // Tuner off
     rc = sendCmd( buffer );
     if ( rc==0 ) {
-      while ( ! tuner_ack_sync.value ) pthread_cond_wait( &tuner_ack_sync.cond, &tuner_ack_sync.lock );
-      tuner_active = false;
+      while ( true==tuner_ack_sync.value ) pthread_cond_wait( &tuner_ack_sync.cond, &tuner_ack_sync.lock );
     }
   }
   pthread_mutex_unlock( &tuner_ack_sync.lock );
@@ -1339,5 +1363,3 @@ Mustang::tunerMode( int value ) {
 
   return 0;
 }
-
-

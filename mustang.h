@@ -97,8 +97,6 @@ class Mustang {
   static const usb_id amp_ids[];
   bool isV2;
 
-  bool tuner_active;
-
   AmpCC * curr_amp;
 
   StompCC * curr_stomp;
@@ -120,6 +118,8 @@ class Mustang {
   void updateReverbObj( const unsigned char *data );
   void updateDelayObj( const unsigned char *data );
   void updateModObj( const unsigned char *data );
+
+  int checkOrDisableTuner( void );
 
   inline bool is_type(const unsigned char *a, const unsigned char *b) {
     return ( 0==memcmp(a,b,2) );
