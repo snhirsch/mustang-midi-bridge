@@ -11,7 +11,7 @@ fi
 
 if ! `grep -q mustang-user /etc/passwd`; then
     echo "Create non-privileged user for MIDI bridge"
-    useradd -M -s /bin/false mustang-user
+    useradd -M -s /bin/false -G plugdev,audio mustang-user
 fi
 
 echo "Copy program and support scripts to $BINDIR"

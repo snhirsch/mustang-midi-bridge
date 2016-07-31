@@ -27,12 +27,8 @@ interface. Technically oriented users can probably work this out,
 otherwise wait a bit until I can refine the packaging and arrange to
 have the various pieces configured from a common setup file.
 
-You can still invoke the bridge on the command line, but there will be
-no output to the console and it no longer responds to keypress
-input. Enter Ctrl-C (SIGINT) to exit.
-
 Support added for amp and effects models specific to the Mustang v2
-products.  This has had only limited testing.
+products.
 
 Added a python script to drive regression testing.
 
@@ -90,18 +86,12 @@ following exceptions:
 
   + FX Insert
 
-    Not supported on the combo amps.
+    Not supported on hardware other than Mustang Floor
 
   + Tap Tempo
 
-    If I can figure out how to do this from FUSE I can code it.
+    (Stay tuned...)
   
-I'm using USBPcap and tshark to snoop communication and plan to
-implement all features accessible from the Fender FUSE application.
-However, some targets listed in the MIDI spec (e.g. amplifier on/off,
-tuner mode) are not controllable from FUSE and it may take some time
-and luck to figure out the protocol.
-
 # Prerequisites
 
   + For Ubuntu Precise or Debian Jessie:
@@ -129,39 +119,28 @@ and luck to figure out the protocol.
 
 Would appreciate feedback on requirements for other distributions.
 
-# OS Configuration
-
-  + Add the id of the user who will be running the bridge to the
-  'audio' and 'plugdev' groups.  That user should then log out and back
-  in to make the groups effective.
-
-  + As root, copy the file '50-mustang.rules' to /etc/udev/rules.d and
-  refresh the system with 'udevadm control --reload'.
-
-There may be slight differences in requirements for other distributions.
-
 # Build
 ```
-$ make opt
+$ make
 ```
-or 
-```
-$ make debug
-```
-as appropriate
 
-# Run
+# Configure
 
-Both the amplifier and MIDI source should be connected first, then:
-```
-$ mustang_midi  midi_port#  midi_listen_channel#
-```
-NOTE1: I'm not sure about other platforms, but on Linux the MIDI
+  1. Update ```60-midi.rules``` with the USB VID (vendor id) and PID
+(product id) of your controller.
+
+  2. Edit ```mustang_bridge_start``` to set values marked as user
+edits.  In addition to setting the VID and PID, you need to specify
+the index of the MIDI interface (see note below) and the MIDI channel
+you want the bridge to listen on.
+
+NOTE: I'm not sure about other platforms, but on Linux the MIDI
 port number is equivalent to the ALSA card index.  I had originally
 treated port as 1..n, but since ALSA (and JACK? Not sure..) starts at
 0, this has now been changed.  You can find the card index for your
 controller by connecting it to the computer and examining the
 pseudo-file, e.g.:
+
 ```
 $ cat /proc/asound/cards
  0 [PCH            ]: HDA-Intel - HDA Intel PCH
@@ -169,16 +148,28 @@ $ cat /proc/asound/cards
  1 [Interface      ]: USB-Audio - USB MS1x1 MIDI Interface
                       M-Audio USB MS1x1 MIDI Interface at usb-0000:00:14.0-1, full speed
 ```
+
 To accept MIDI messages from devices behind the M-Audio interface you
 would now specify '1' as the MIDI port value.
 
-NOTE2: RPi and BBG are a bit fussy about enumeration of new USB
-devices. If you are not getting proper communication, quit the program
-and try replugging both the Fender amp and MIDI controller **after**
-those devices are powered up.
+# Install
 
-NOTE3: I've had success using a passive USB hub with the single USB on
-the BBG, but YMMV since most USB<->5Pin MIDI converters draw some
-degree of bus power.  A powered hub might be necessary in some
-situations.
+Run the ```install.sh``` script as root
 
+# Run
+
+If you have configured everything correctly, the bridge should start
+automatically when both the controller and the Mustang amp are
+connected via USB.  If either or both are disconnected or shut off,
+the bridge will be killed automatically.
+
+# In case of difficulty
+
+RPi and BBG are a bit fussy about enumeration of new USB devices. If
+you are not getting proper communication, quit the program and try
+replugging both the Fender amp and MIDI controller **after** those
+devices are powered up.
+
+I've had success using a passive USB hub with the single USB on the
+BBG, but YMMV since most USB<->5Pin MIDI converters draw some degree
+of bus power.  A powered hub might be necessary in some situations.
