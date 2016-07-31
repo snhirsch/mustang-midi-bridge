@@ -162,13 +162,13 @@ treated port as 1..n, but since ALSA (and JACK? Not sure..) starts at
 0, this has now been changed.  You can find the card index for your
 controller by connecting it to the computer and examining the
 pseudo-file, e.g.:
-
+```
 $ cat /proc/asound/cards
  0 [PCH            ]: HDA-Intel - HDA Intel PCH
                       HDA Intel PCH at 0xf7530000 irq 30
  1 [Interface      ]: USB-Audio - USB MS1x1 MIDI Interface
                       M-Audio USB MS1x1 MIDI Interface at usb-0000:00:14.0-1, full speed
-
+```
 To accept MIDI messages from devices behind the M-Audio interface you
 would now specify '1' as the MIDI port value.
 
