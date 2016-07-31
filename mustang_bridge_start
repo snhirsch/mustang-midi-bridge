@@ -11,7 +11,7 @@ from string import split
 
 import usb.core
 
-####### Start User Edits #########
+rundir = "/var/run/mustang/"
 
 # Controller USB parms
 control_vid = 0x0763
@@ -19,12 +19,9 @@ control_pid = 0x0160
 
 # Mustang USB parms
 mustang_vid = 0x1ed8
+mustang_pids = ( 0x0004, 0x0005, 0x000a, 0x0010, 0x0012, 0x0014, 0x0016 )
 
-# Mustang III (original)
-# mustang_pid = 0x0005
-
-# Mustang III v2
-mustang_pid = 0x0016
+####### Start User Edits #########
 
 # Controller MIDI device
 midi_device = 1
@@ -34,44 +31,53 @@ midi_channel = 1
 
 ######## End User Edits ##########
 
-rundir = "/var/run/mustang/"
-
 # Look for devices
-controller = usb.core.find( idVendor=control_vid, idProduct=control_pid )
-mustang = usb.core.find( idVendor=mustang_vid, idProduct=mustang_pid )
+controller = usb.core.find( idVendor = control_vid, idProduct = control_pid )
+if ( not controller ):
+    sys.exit( 0 )
+
+mustang = False
+for pid in mustang_pids:
+    device = usb.core.find( idVendor = mustang_vid, idProduct = pid )
+    if ( device ):
+        mustang = True
+        break
+
+if ( not mustang ):
+    sys.exit( 0 )
 
 pid = os.getpid()
 # syslog.syslog( "%d: Starting" % pid )
 
-# was it found?
-if controller and mustang:
-    os.chdir( rundir )
-    filelist = glob.glob( 'mustang_*' )
+# Look for atomic pid file
+os.chdir( rundir )
+filelist = glob.glob( 'mustang_*' )
+if len( filelist ) != 1:
+    syslog.syslog( "%d: /var/run/mustang is not properly setup" % pid )
+    sys.exit( 0 )
 
-    if len( filelist ) == 1:
-        lockfile = filelist[0]
-        oldpid = split( lockfile, '_' )[1]
+# Found file.  Parse out the PID of the process that created it.
+lockfile = filelist[0]
+oldpid = split( lockfile, '_' )[1]
 
-        # syslog.syslog( "%d: Check for path /proc/%s" % (pid, oldpid) )
-        if not os.path.exists( "/proc/%s" % oldpid ):
-            # No such process, ok to start ours
-            # syslog.syslog( "%d: Renaming %s to mustang_%d" % (pid, lockfile, pid) )
-            try:
-                os.rename( lockfile, "mustang_%d" % os.getpid() ) 
-            except Exception, e:
-                pass
-                # syslog.syslog( "%d: Unable to rename file" % pid )
-            else:
-                # syslog.syslog( "%d: About to exec" % pid )
-                # Drop privileges and start the program
-                pwObj = getpwnam('mustang-user')
-                os.setgid( pwObj.pw_gid )
-                
-                # Need secondary groups to access MIDI and USB devices
-                sec_gids = ( getgrnam('plugdev').gr_gid, getgrnam('audio').gr_gid )
-                os.setgroups( sec_gids )
-                
-                os.setuid( pwObj.pw_uid )
-                os.execl( "/usr/local/bin/mustang_midi", "mustang_midi", "%s" % midi_device, "%s" % midi_channel )
+# syslog.syslog( "%d: Check for path /proc/%s" % (pid, oldpid) )
+if not os.path.exists( "/proc/%s" % oldpid ):
+    # No such process, ok to start ours
+    # syslog.syslog( "%d: Renaming %s to mustang_%d" % (pid, lockfile, pid) )
+    try:
+        os.rename( lockfile, "mustang_%d" % os.getpid() ) 
+    except Exception, e:
+        pass
+        # syslog.syslog( "%d: Unable to rename file" % pid )
     else:
-        syslog.syslog( "%d: /var/run/mustang is not properly setup" % pid )
+        # syslog.syslog( "%d: About to exec" % pid )
+        # Drop privileges and start the program
+        pwObj = getpwnam('mustang-user')
+        os.setgid( pwObj.pw_gid )
+        
+        # Need secondary groups to access MIDI and USB devices
+        sec_gids = ( getgrnam('plugdev').gr_gid, getgrnam('audio').gr_gid )
+        os.setgroups( sec_gids )
+        
+        os.setuid( pwObj.pw_uid )
+        os.execl( "/usr/local/bin/mustang_midi", "mustang_midi", "%s" % midi_device, "%s" % midi_channel )

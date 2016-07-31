@@ -9,9 +9,10 @@ if [ ! -f "mustang_midi" ]; then
     exit 1
 fi
 
-echo "Create non-privileged user for MIDI bridge"
-
-useradd -M -s /bin/false mustang-user
+if ! `grep -q mustang-user /etc/passwd`; then
+    echo "Create non-privileged user for MIDI bridge"
+    useradd -M -s /bin/false mustang-user
+fi
 
 echo "Copy program and support scripts to $BINDIR"
 

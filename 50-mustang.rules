@@ -1,7 +1,4 @@
-# Mustang III (original)
-ACTION=="add|change", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="1ed8", ATTRS{idProduct}=="0005", GROUP="plugdev", RUN+="/bin/bash -c '/bin/echo /usr/local/bin/mustang_bridge_start | /usr/bin/at now'"
-ACTION=="remove", ENV{ID_VENDOR_ID}=="1ed8", ENV{ID_MODEL_ID}=="0005", ENV{DEVTYPE}=="usb_device", RUN+="/usr/local/bin/mustang_bridge_stop"
+# Cover all known Mustang models
+ACTION=="add|change", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="1ed8", ATTRS{idProduct}=="0004|0005|000a|0010|0012|0014|0016", GROUP="plugdev", RUN+="/bin/bash -c '/bin/echo /usr/local/bin/mustang_bridge_start | /usr/bin/at now'"
+ACTION=="remove", ENV{ID_VENDOR_ID}=="1ed8", ENV{ID_MODEL_ID}=="0004|0005|000a|0010|0012|0014|0016", ENV{DEVTYPE}=="usb_device", RUN+="/usr/local/bin/mustang_bridge_stop"
 
-# Mustang III v2
-ACTION=="add|change", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="1ed8", ATTRS{idProduct}=="0016", GROUP="plugdev", RUN+="/bin/bash -c '/bin/echo /usr/local/bin/mustang_bridge_start | /usr/bin/at now'"
-ACTION=="remove", ENV{ID_VENDOR_ID}=="1ed8", ENV{ID_MODEL_ID}=="0016", ENV{DEVTYPE}=="usb_device", RUN+="/usr/local/bin/mustang_bridge_stop"

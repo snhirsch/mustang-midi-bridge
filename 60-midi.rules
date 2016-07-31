@@ -1,2 +1,3 @@
+# Must customize vendor and product id for your controller
 ACTION=="add|change", SUBSYSTEM=="usb", ATTRS{idVendor}=="0763", ATTRS{idProduct}=="0160", RUN+="/bin/bash -c '/bin/echo /usr/local/bin/mustang_bridge_start | /usr/bin/at now'"
 ACTION=="remove", ENV{ID_VENDOR_ID}=="0763", ENV{ID_MODEL_ID}=="0160", ENV{DEVTYPE}=="usb_device", RUN+="/usr/local/bin/mustang_bridge_stop"
