@@ -13,15 +13,15 @@ import usb.core
 
 rundir = "/var/run/mustang/"
 
-# Controller USB parms
-control_vid = 0x0763
-control_pid = 0x0160
-
 # Mustang USB parms
 mustang_vid = 0x1ed8
 mustang_pids = ( 0x0004, 0x0005, 0x000a, 0x0010, 0x0012, 0x0014, 0x0016 )
 
 ####### Start User Edits #########
+
+# Controller USB parms
+control_vid = 0x0763
+control_pid = 0x0160
 
 # Controller MIDI device
 midi_device = 1
