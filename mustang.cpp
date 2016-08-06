@@ -113,10 +113,10 @@ Mustang::handleInput( void ) {
         case 0x00:
         {
           // Patch change acknowledge sequence done
-          pthread_mutex_lock( &cc_ack_eom.lock );
-          cc_ack_eom.value = true;
-          pthread_cond_signal( &cc_ack_eom.cond );
-          pthread_mutex_unlock( &cc_ack_eom.lock );
+          pthread_mutex_lock( &pc_ack_sync.lock );
+          pc_ack_sync.value = true;
+          pthread_cond_signal( &pc_ack_sync.cond );
+          pthread_mutex_unlock( &pc_ack_sync.lock );
           break;
         }
         case 0x04:
@@ -132,8 +132,6 @@ Mustang::handleInput( void ) {
           // parm dump or when manual patch change occurs.
           curr_preset_idx = idx;
 
-          // preset_names_sync.value = true;
-          // pthread_cond_signal( &preset_names_sync.cond );
           pthread_mutex_unlock( &preset_names_sync.lock );
           break;
         }
@@ -147,8 +145,6 @@ Mustang::handleInput( void ) {
           memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
           updateAmpObj( read_buf );
 
-          // dsp_sync[idx].value = true;
-          // pthread_cond_signal( &dsp_sync[idx].cond );
           pthread_mutex_unlock( &dsp_sync[idx].lock );
           break;
         }
@@ -161,8 +157,6 @@ Mustang::handleInput( void ) {
           memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
           updateStompObj( read_buf );
 
-          // dsp_sync[idx].value = true;
-          // pthread_cond_signal( &dsp_sync[idx].cond );
           pthread_mutex_unlock( &dsp_sync[idx].lock );
           break;
         }
@@ -175,8 +169,6 @@ Mustang::handleInput( void ) {
           memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
           updateModObj( read_buf );
           
-          // dsp_sync[idx].value = true;
-          // pthread_cond_signal( &dsp_sync[idx].cond );
           pthread_mutex_unlock( &dsp_sync[idx].lock );
           break;
         }
@@ -189,8 +181,6 @@ Mustang::handleInput( void ) {
           memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
           updateDelayObj( read_buf );
           
-          // dsp_sync[idx].value = true;
-          // pthread_cond_signal( &dsp_sync[idx].cond );
           pthread_mutex_unlock( &dsp_sync[idx].lock );
           break;
         }
@@ -203,8 +193,6 @@ Mustang::handleInput( void ) {
           memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
           updateReverbObj( read_buf );
           
-          // dsp_sync[idx].value = true;
-          // pthread_cond_signal( &dsp_sync[idx].cond );
           pthread_mutex_unlock( &dsp_sync[idx].lock );
           break;
         }
@@ -216,8 +204,6 @@ Mustang::handleInput( void ) {
 
           memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
 
-          // dsp_sync[idx].value = true;
-          // pthread_cond_signal( &dsp_sync[idx].cond );
           pthread_mutex_unlock( &dsp_sync[idx].lock );
           break;
         }
@@ -537,44 +523,44 @@ Mustang::updateAmpObj( const unsigned char *data ) {
 
   const unsigned char *model = data + MODEL;
     
-  if ( is_type(f57_deluxe_id,model) ||
-       is_type(f57_champ_id,model) ||
-       is_type(f65_deluxe_id,model) ||
-       is_type(f65_princeton_id,model) ||
-       is_type(f65_twin_id,model) ||
-       is_type(s60s_thrift_id,model) ) {
+  if ( match16(f57_deluxe_id,model) ||
+       match16(f57_champ_id,model) ||
+       match16(f65_deluxe_id,model) ||
+       match16(f65_princeton_id,model) ||
+       match16(f65_twin_id,model) ||
+       match16(s60s_thrift_id,model) ) {
     new_amp = new AmpCC( this, model, 0 );
   }
-  else if ( is_type(f59_bassman_id,model) ||
-            is_type(brit_70s_id,model) ) {
+  else if ( match16(f59_bassman_id,model) ||
+            match16(brit_70s_id,model) ) {
     new_amp = new AmpCC1( this, model, 0 );
   }
-  else if ( is_type(f_supersonic_id,model) ) {
+  else if ( match16(f_supersonic_id,model) ) {
     new_amp = new AmpCC2( this, model, 0 );
   }
-  else if ( is_type(brit_60s_id,model) ) {
+  else if ( match16(brit_60s_id,model) ) {
     new_amp = new AmpCC3( this, model, 0);
   }
-  else if ( is_type(brit_80s_id,model) ||
-            is_type(us_90s_id,model) ||
-            is_type(metal_2k_id,model) ||
-            is_type(brit_watt_id,model) ) {
+  else if ( match16(brit_80s_id,model) ||
+            match16(us_90s_id,model) ||
+            match16(metal_2k_id,model) ||
+            match16(brit_watt_id,model) ) {
     new_amp = new AmpCC4( this, model, 0 );
   }
-  else if ( is_type(studio_preamp_id,model) ) {
+  else if ( match16(studio_preamp_id,model) ) {
     new_amp = new AmpCC5( this, model, 0 );
   }
-  else if ( is_type(brit_color_id,model) ) {
+  else if ( match16(brit_color_id,model) ) {
     new_amp = new AmpCC6( this, model, 0 );
   }
-  else if ( is_type(f57_twin_id,model) ) {
+  else if ( match16(f57_twin_id,model) ) {
     new_amp = new AmpCC7( this, model, 0 );
   }
-  else if ( is_type(null_amp_id,model) ) {
+  else if ( match16(null_amp_id,model) ) {
     new_amp = new NullAmpCC( this, model, 0 );
   }
   else {
-    fprintf( stderr, "W - Amp id {%x,%x} not supported yet\n", model[0], model[1] );
+    fprintf( stderr, "W - Amp id {%x,%x} not expected\n", model[0], model[1] );
   }
 
   if ( new_amp!=NULL ) {
@@ -648,12 +634,10 @@ Mustang::setAmp( int ord ) {
             buffer = brit_color;
             break;
           default:
-            fprintf( stderr, "W - Amp select %d not supported\n", ord );
             return 0;
         }
       }
       else {
-        fprintf( stderr, "W - Amp select %d not supported\n", ord );
         return 0;
       }
   }
@@ -673,7 +657,8 @@ Mustang::ampControl( int cc, int value ) {
   int rc = curr_amp->dispatch( cc, value, cmd );
   pthread_mutex_unlock( &dsp_sync[AMP_STATE].lock );
 
-  if ( rc<0 ) return rc;
+  // If value out-of-range, just return gracefully
+  if ( rc<0 ) return 0;
   rc = direct_control( cmd );
   return rc;
 }
@@ -687,45 +672,45 @@ Mustang::updateStompObj( const unsigned char *data ) {
   const unsigned char *model = data + MODEL;
   const unsigned char slot = data[FXSLOT];
   
-  if ( is_type(overdrive_id,model) ) {
+  if ( match16(overdrive_id,model) ) {
     new_stomp = new OverdriveCC( this, model, slot );
   }
-  else if ( is_type(wah_id,model) ||
-            is_type(touch_wah_id,model) ) {
+  else if ( match16(wah_id,model) ||
+            match16(touch_wah_id,model) ) {
     new_stomp = new WahCC( this, model, slot );
   }
-  else if ( is_type(fuzz_id,model) ) {
+  else if ( match16(fuzz_id,model) ) {
     new_stomp = new FuzzCC( this, model, slot );
   }
-  else if ( is_type(fuzz_twah_id,model) ) {
+  else if ( match16(fuzz_twah_id,model) ) {
     new_stomp = new FuzzTouchWahCC( this, model, slot );
   }
-  else if ( is_type(simple_comp_id,model) ) {
+  else if ( match16(simple_comp_id,model) ) {
     new_stomp = new SimpleCompCC( this, model, slot );
   }
-  else if ( is_type(comp_id,model) ) {
+  else if ( match16(comp_id,model) ) {
     new_stomp = new CompCC( this, model, slot );
   }
-  else if ( is_type(range_boost_id,model) ) {
+  else if ( match16(range_boost_id,model) ) {
     new_stomp = new RangerCC( this, model, slot );
   }
-  else if ( is_type(green_box_id,model) ) {
+  else if ( match16(green_box_id,model) ) {
     new_stomp = new GreenBoxCC( this, model, slot );
   }
-  else if ( is_type(orange_box_id,model) ) {
+  else if ( match16(orange_box_id,model) ) {
     new_stomp = new OrangeBoxCC( this, model, slot );
   }
-  else if ( is_type(black_box_id,model) ) {
+  else if ( match16(black_box_id,model) ) {
     new_stomp = new BlackBoxCC( this, model, slot );
   }
-  else if ( is_type(big_fuzz_id,model) ) {
+  else if ( match16(big_fuzz_id,model) ) {
     new_stomp = new BigFuzzCC( this, model, slot );
   }
-  else if ( is_type(null_stomp_id,model) ) {
+  else if ( match16(null_stomp_id,model) ) {
     new_stomp = new NullStompCC( this, model, 0 );
   }
   else {
-    fprintf( stderr, "W - Stomp id {%x,%x} not supported\n", model[0], model[1] );
+    fprintf( stderr, "W - Stomp id {%x,%x} not expected\n", model[0], model[1] );
   }
 
   if ( new_stomp!=NULL ) {
@@ -759,7 +744,6 @@ Mustang::setStomp( int ord ) {
       break;
     case 5:
       if ( isV2 ) {
-        fprintf( stderr, "W - Stomp select %d not supported\n", ord );
         return 0;
       }
       else {
@@ -791,12 +775,10 @@ Mustang::setStomp( int ord ) {
             buffer = big_fuzz;
             break;
           default:
-            fprintf( stderr, "W - Stomp select %d not supported\n", ord );
             return 0;
         }
       }
       else {
-        fprintf( stderr, "W - Stomp select %d not supported\n", ord );
         return 0;
       }
   }
@@ -820,7 +802,7 @@ Mustang::stompControl( int cc, int value ) {
   int rc = curr_stomp->dispatch( cc, value, cmd );
   pthread_mutex_unlock( &dsp_sync[STOMP_STATE].lock );
 
-  if ( rc<0 ) return rc;
+  if ( rc<0 ) return 0;
   rc = direct_control( cmd );
   return rc;
 }
@@ -834,45 +816,45 @@ Mustang::updateModObj( const unsigned char *data ) {
   const unsigned char *model = data + MODEL;
   const unsigned char slot = data[FXSLOT];
   
-  if ( is_type(sine_chorus_id,model) ||
-       is_type(tri_chorus_id,model) ) {
+  if ( match16(sine_chorus_id,model) ||
+       match16(tri_chorus_id,model) ) {
     new_mod = new ChorusCC( this, model, slot );
   }
-  else if ( is_type(sine_flange_id,model) ||
-            is_type(tri_flange_id,model) ) {
+  else if ( match16(sine_flange_id,model) ||
+            match16(tri_flange_id,model) ) {
     new_mod = new FlangerCC( this, model, slot );
   }
-  else if ( is_type(vibratone_id,model) ) {
+  else if ( match16(vibratone_id,model) ) {
     new_mod = new VibratoneCC( this, model, slot );
   }
-  else if ( is_type(vint_trem_id,model) ||
-            is_type(sine_trem_id,model) ) {
+  else if ( match16(vint_trem_id,model) ||
+            match16(sine_trem_id,model) ) {
     new_mod = new TremCC( this, model, slot );
   }
-  else if ( is_type(ring_mod_id,model) ) {
+  else if ( match16(ring_mod_id,model) ) {
     new_mod = new RingModCC( this, model, slot );
   }
-  else if ( is_type(step_filt_id,model) ) {
+  else if ( match16(step_filt_id,model) ) {
     new_mod = new StepFilterCC( this, model, slot );
   }
-  else if ( is_type(phaser_id,model) ) {
+  else if ( match16(phaser_id,model) ) {
     new_mod = new PhaserCC( this, model, slot );
   }
-  else if ( is_type(pitch_shift_id,model) ) {
+  else if ( match16(pitch_shift_id,model) ) {
     new_mod = new PitchShifterCC( this, model, slot );
   }
-  else if ( is_type(m_wah_id,model) ||
-            is_type(m_touch_wah_id,model) ) {
+  else if ( match16(m_wah_id,model) ||
+            match16(m_touch_wah_id,model) ) {
     new_mod = new ModWahCC( this, model, slot );
   }
-  else if ( is_type(dia_pitch_id,model) ) {
+  else if ( match16(dia_pitch_id,model) ) {
     new_mod = new DiatonicShiftCC( this, model, slot );
   }
-  else if ( is_type(null_mod_id,model) ) {
+  else if ( match16(null_mod_id,model) ) {
     new_mod = new NullModCC( this, model, 0 );
   }
   else {
-    fprintf( stderr, "W - Mod id {%x,%x} not supported\n", model[0], model[1] );
+    fprintf( stderr, "W - Mod id {%x,%x} not expected\n", model[0], model[1] );
   }
 
   if ( new_mod!=NULL ) {
@@ -937,12 +919,10 @@ Mustang::setMod( int ord ) {
             buffer = diatonic_pitch_shift;
             break;
           default:
-            fprintf( stderr, "W - Mod select %d not supported\n", ord );
             return 0;
         }
       }
       else {
-        fprintf( stderr, "W - Mod select %d not supported\n", ord );
         return 0;
       }
   }
@@ -966,7 +946,7 @@ Mustang::modControl( int cc, int value ) {
   int rc = curr_mod->dispatch( cc, value, cmd );
   pthread_mutex_unlock( &dsp_sync[MOD_STATE].lock );
 
-  if ( rc<0 ) return rc;
+  if ( rc<0 ) return 0;
   rc = direct_control( cmd );
   return rc;
 }
@@ -980,36 +960,36 @@ Mustang::updateDelayObj( const unsigned char *data ) {
   const unsigned char *model = data + MODEL;
   const unsigned char slot = data[FXSLOT];
 
-  if ( is_type(mono_dly_id,model) ) {
+  if ( match16(mono_dly_id,model) ) {
     new_delay = new MonoDelayCC( this, model, slot );
   }
-  else if ( is_type(mono_filter_id,model) ||
-            is_type(st_filter_id,model) ) {
+  else if ( match16(mono_filter_id,model) ||
+            match16(st_filter_id,model) ) {
     new_delay = new EchoFilterCC( this, model, slot );
   }
-  else if ( is_type(mtap_dly_id,model) ) {
+  else if ( match16(mtap_dly_id,model) ) {
     new_delay = new MultitapDelayCC( this, model, slot );
   }
-  else if ( is_type(pong_dly_id,model) ) {
+  else if ( match16(pong_dly_id,model) ) {
     new_delay = new PingPongDelayCC( this, model, slot );
   }
-  else if ( is_type(duck_dly_id,model) ) {
+  else if ( match16(duck_dly_id,model) ) {
     new_delay = new DuckingDelayCC( this, model, slot );
   }
-  else if ( is_type(reverse_dly_id,model) ) {
+  else if ( match16(reverse_dly_id,model) ) {
     new_delay = new ReverseDelayCC( this, model, slot );
   }
-  else if ( is_type(tape_dly_id,model) ) {
+  else if ( match16(tape_dly_id,model) ) {
     new_delay = new TapeDelayCC( this, model, slot );
   }
-  else if ( is_type(st_tape_dly_id,model) ) {
+  else if ( match16(st_tape_dly_id,model) ) {
     new_delay = new StereoTapeDelayCC( this, model, slot );
   }
-  else if ( is_type(null_dly_id,model) ) {
+  else if ( match16(null_dly_id,model) ) {
     new_delay = new NullDelayCC( this, model, 0 );
   }
   else {
-    fprintf( stderr, "W - Delay id {%x,%x} not supported\n", model[0], model[1] );
+    fprintf( stderr, "W - Delay id {%x,%x} not expected\n", model[0], model[1] );
   }
 
   if ( new_delay!=NULL ) {
@@ -1056,7 +1036,6 @@ Mustang::setDelay( int ord ) {
       buffer = stereo_tape_delay;
       break;
     default:
-      fprintf( stderr, "W - Delay select %d not supported\n", ord );
       return 0;
   }
 
@@ -1079,7 +1058,7 @@ Mustang::delayControl( int cc, int value ) {
   int rc = curr_delay->dispatch( cc, value, cmd );
   pthread_mutex_unlock( &dsp_sync[DELAY_STATE].lock );
 
-  if ( rc<0 ) return rc;
+  if ( rc<0 ) return 0;
   rc = direct_control( cmd );
   return rc;
 }
@@ -1093,7 +1072,7 @@ Mustang::updateReverbObj( const unsigned char *data ) {
   
   delete curr_reverb;
 
-  if ( is_type(null_reverb_id,model) ) {
+  if ( match16(null_reverb_id,model) ) {
     curr_reverb = new NullReverbCC( this, model, 0 );
   }
   else {
@@ -1142,7 +1121,6 @@ Mustang::setReverb( int ord ) {
       buffer = spring_65;
       break;
     default:
-      fprintf( stderr, "W - Reverb select %d not supported\n", ord );
       return 0;
   }
 
@@ -1165,7 +1143,7 @@ Mustang::reverbControl( int cc, int value ) {
   int rc = curr_reverb->dispatch( cc, value, cmd );
   pthread_mutex_unlock( &dsp_sync[REVERB_STATE].lock );
 
-  if ( rc<0 ) return rc;
+  if ( rc<0 ) return 0;
   rc = direct_control( cmd );
   return rc;
 }
@@ -1270,13 +1248,13 @@ Mustang::patchChange( int patch ) {
 
   ////// Critical Section
   //
-  pthread_mutex_lock( &cc_ack_eom.lock );
+  pthread_mutex_lock( &pc_ack_sync.lock );
 
-  cc_ack_eom.value = false;
+  pc_ack_sync.value = false;
   int rc = sendCmd( buffer );
-  while ( rc==0 && ! cc_ack_eom.value ) pthread_cond_wait( &cc_ack_eom.cond, &cc_ack_eom.lock );
+  while ( rc==0 && ! pc_ack_sync.value ) pthread_cond_wait( &pc_ack_sync.cond, &pc_ack_sync.lock );
 
-  pthread_mutex_unlock( &cc_ack_eom.lock );
+  pthread_mutex_unlock( &pc_ack_sync.lock );
 
 #ifdef DEBUG
   fprintf( stderr, "DEBUG: Leaving patch change\n" );

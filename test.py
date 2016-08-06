@@ -1,10 +1,5 @@
 #!/usr/bin/python
 
-# Use aconnectgui to wire Midi Through Port-0 out to
-# mustang bridge virtual input port name
-
-# OR
-
 # hirsch@z87:~$ aconnect -o
 # client 14: 'Midi Through' [type=kernel]
 #    0 'Midi Through Port-0'
@@ -12,8 +7,6 @@
 #    0 'TestPort        '
 #
 # Given the above, open RtMidi as: 'RtMidi Input Client 128:0'
-#
-# outport = mido.open_output('Midi Through 14:0')
 
 from time import sleep
 import sys
@@ -130,6 +123,7 @@ def run_delay_test( struct, outport ):
 
     for i in range( 0, len(struct) ):
         control_rec = struct[i]
+        # Skip if not a V2 amp
         if control_rec[3] and type != 2:
              continue
 
@@ -255,11 +249,32 @@ def program_change_test( outport ):
         outport.send( pc )
         sleep( 0.5 )
 
+def tuner_test( outport ):
+    raw_input( "Hit ENTER to select tuner...\n" )
+    cc.control = 20
+    cc.value = 127
+    outport.send( cc )
+    raw_input( "Hit ENTER to deselect tuner...\n" )
+    cc.value = 0
+    outport.send( cc )
+
+def bypass_test( outport ):
+    raw_input( "Hit ENTER to select all effects...\n" )
+    cc.control = 22
+    cc.value = 127
+    outport.send( cc )
+    raw_input( "Hit ENTER to bypass all effects...\n" )
+    cc.value = 0
+    outport.send( cc )
+
+
+###################### main ########################
+
 args = sys.argv
 
 if len(args) < 4:
-    print "Usage: test.py <virtual_port_name> <midi_channel> <v1|v2> [test_name]\n"
-    print "       Pass test name in {pc, stomp, mod, reverb, delay, amp} for single test\n"
+    print "Usage: test.py <controller_port> <midi_channel> <v1|v2> [test_name]\n"
+    print "       Pass test name in {pc, tuner, efxbypass, stomp, mod, reverb, delay, amp} for single test\n"
     print "       Default is to run all of them if no arg 4 passed\n"
     sys.exit( 1 )
 
@@ -286,8 +301,14 @@ outport = mido.open_output( args[1] )
 if single == "all" or single == "pc":
     program_change_test( outport )
 
+if single == "all" or single == "tuner":
+    tuner_test( outport )
+
+if single == "all" or single == "efxbypass":
+    bypass_test( outport )
+
 if single == "all" or single == "stomp":
-    #       Model         #  Ctrl      v2only
+    #       Model            Ctrl      v2only
     stomp_test = (
         ( "Ranger Boost", 8, "AAAA",   True ),
         ( "Green Box",    9, "AAAA",   True ),
@@ -303,11 +324,11 @@ if single == "all" or single == "stomp":
     run_stomp_test( stomp_test, outport )
 
 if single == "all" or single == "mod":
-    #       Model         #  Ctrl      v2only
+    #       Model            Ctrl      v2only
     mod_test = (
-        ( "Wah",         12, "AAAAD02", True ),
-        ( "Touch Wah",   13, "AAAAD02", True ),
-        ( "Dia Shift",   14, "AD22D12D09A", True ),
+        ( "Wah",         12, "AAAAD01", True ),
+        ( "Touch Wah",   13, "AAAAD01", True ),
+        ( "Dia Shift",   14, "AD21D11D08A", True ),
 
         ( "Sine Chorus",  1, "AAAAA",  False ),
         ( "Vibratone",    5, "AAAAA",  False ),
@@ -322,7 +343,7 @@ if single == "all" or single == "reverb":
     run_reverb_test( outport )
 
 if single == "all" or single == "delay":
-    #      Model        #  Ctrl     v2only
+    #      Model           Ctrl     v2only
     delay_test = (
         ( "Mono Delay", 1, "AAAAA",  False ),
         ( "Multitap",   4, "AAAAD03", False ),
@@ -331,7 +352,7 @@ if single == "all" or single == "delay":
     run_delay_test( delay_test, outport )
 
 if single == "all" or single == "amp":
-    #      Model,               #, Bias/Sag? Has 78+79?
+    #      Model,                  Ctrl                 v2only
     amp_test = ( 
         ( "Studio Preamp",     13, "AAAAA--D04D12",     True  ),
 
@@ -343,3 +364,4 @@ if single == "all" or single == "amp":
     )
     run_amp_test( amp_test, outport )
 
+print "All tests complete\n"

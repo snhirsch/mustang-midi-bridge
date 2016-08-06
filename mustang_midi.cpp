@@ -1,4 +1,3 @@
-#include <iostream>
 #include <cstdlib>
 #include <cstdio>
 #include <unistd.h>
@@ -116,29 +115,53 @@ void message_action( double deltatime, std::vector< unsigned char > *message, vo
 
 }
 
-// void errorcallback( RtError::Type type, const std::string & detail, void *userData ) {
-//   std::cout << "Error: Code = " << type << ", Msg: " << detail << "\n";
-// }
 
 void usage() {
-    fprintf( stderr, "Usage: mustang_midi <controller_port#> <midi_channel#>\n" );
-    fprintf( stderr, "       port = 0..n,  channel = 1..16\n" );
+  const char msg[] = 
+    "Usage: mustang_midi <controller_port#> <midi_channel#>\n"
+    "       mustang_midi <virtual_port> <midi_channel#>\n\n"
 
-    exit( 1 );
+    "       port = 0..n,  channel = 1..16\n";
+
+  fprintf( stderr, msg );
+  exit( 1 );
 }
+
 
 int main( int argc, const char **argv ) {
   if ( argc != 3 ) usage();
 
+  RtMidiIn input_handler;
+
   char *endptr;
-  errno = 0;
+
   int port = (int) strtol( argv[1], &endptr, 10 );
-  if ( endptr == argv[0] ) usage();
-  if ( port < 0 ) usage();
+  if ( endptr == argv[0] ) {
+    try {
+      input_handler.openVirtualPort( argv[2] );
+    }
+    catch ( RtError &error ) {
+      exit( 1 );
+    }
+  }
+  else {
+    if ( port < 0 ) usage();
+    try {
+      input_handler.openPort( port );
+    }
+    catch ( RtError &error ) {
+      exit( 1 );
+    }
+  }
 
   channel = (int) strtol( argv[2], &endptr, 10 ) - 1;
   if ( endptr == argv[0] ) usage();
   if ( channel < 0 || channel > 15 ) usage();
+  
+  input_handler.setCallback( &message_action );
+
+  // Don't want sysex, timing, active sense
+  input_handler.ignoreTypes( true, true, true );
 
   if ( 0 != mustang.initialize() ) {
     fprintf( stderr, "Cannot setup USB communication\n" );
@@ -148,22 +171,6 @@ int main( int argc, const char **argv ) {
     fprintf( stderr, "Thread setup and init failed\n" );
     exit( 1 );
   }
-
-  RtMidiIn *input_handler = new RtMidiIn();
-
-  // See if we have any ports
-  unsigned int num_ports = input_handler->getPortCount();
-  if ( num_ports == 0 ) {
-    std::cout << "Cannot find a MIDI port\n";
-    delete input_handler;
-    return 8;
-  }
-  input_handler->openPort( port );
-  // input_handler->openVirtualPort( "TestPort" );
-  input_handler->setCallback( &message_action );
-
-  // Don't want sysex, timing, active sense
-  input_handler->ignoreTypes( true, true, true );
 
   // Block and wait for signal 
   pause();

@@ -23,12 +23,15 @@ class StompCC;
 
 class Mustang {
 
+  // Pre-built 'execute' command
   unsigned char execute[64];
   
   libusb_device_handle *usb_io;
 
+  // USB listen thread
   pthread_t worker;
 
+  // Shutdown request flag
   pthread_mutex_t shutdown_lock = PTHREAD_MUTEX_INITIALIZER;
   bool want_shutdown;
 
@@ -44,6 +47,13 @@ class Mustang {
     }
   };
 
+  // Identify patch-change ack / DSP parm update
+  static const unsigned char state_prefix[];
+
+  // Received {0x1c, 0x01, 0x00, ...}
+  // --> End of preset select acknowledge stream
+  Condition<bool> pc_ack_sync;
+
   // Synchronize access to preset names
   Condition<bool> preset_names_sync;
   char preset_names[100][33];
@@ -51,39 +61,39 @@ class Mustang {
   // Index to current preset 
   unsigned curr_preset_idx;
 
-  // Identify DSP-specific response family
-  static const unsigned char state_prefix[];
-
-  // Manage access to each DSP block and/of associated
-  // object.
+  // Manage access to each DSP data block and/or associated object.
   Condition<bool> dsp_sync[6];
   unsigned char dsp_parms[6][64];
 
-  // Received {0x1c, 0x01, 0x00, ...}
-  // --> End of preset select acknowledge stream
-  Condition<bool> cc_ack_eom;
+  // Manage data and behavior for specific DSP models
+  AmpCC * curr_amp;
+  StompCC * curr_stomp;
+  ModCC * curr_mod;
+  DelayCC * curr_delay;
+  ReverbCC * curr_reverb;
+
+  // Synchronize on end of parm dump
+  Condition<bool> parm_read_sync;
+  static const unsigned char parm_read_ack[];
+
+  // Synchronize on receipt of direct control acknowledge
+  Condition<bool> cc_ack_sync;
+  static const unsigned char cc_ack[];
 
   // Received {0x00, 0x00, 0x19, ... }
   // --> Acknowledge efx on/off toggle
   Condition<bool> efx_toggle_sync;
   static const unsigned char efx_toggle_ack[];
 
-  // Synchronize on end of parm dump
-  Condition<bool> parm_read_sync;
-  static const unsigned char parm_read_ack[];
-
   // Synchronize on receipt of model change acknowledge
   Condition<bool> model_change_sync;
   static const unsigned char model_change_ack[];
-
-  // Synchronize on receipt of direct control acknowledge
-  Condition<bool> cc_ack_sync;
-  static const unsigned char cc_ack[];
 
   // Sync on tuner on/off ack
   Condition<bool> tuner_ack_sync;
   static const unsigned char tuner_ack[];
   
+  // Attached device probe structure
   struct usb_id {
     // product id
     int pid;
@@ -93,16 +103,8 @@ class Mustang {
     bool isV2;
   };
 
-  // For device probe
   static const usb_id amp_ids[];
   bool isV2;
-
-  AmpCC * curr_amp;
-
-  StompCC * curr_stomp;
-  ModCC * curr_mod;
-  DelayCC * curr_delay;
-  ReverbCC * curr_reverb;
 
   static void *threadStarter( void * );
   void handleInput( void );
@@ -121,7 +123,8 @@ class Mustang {
 
   int checkOrDisableTuner( void );
 
-  inline bool is_type(const unsigned char *a, const unsigned char *b) {
+  // Check for equality of 2-byte values
+  inline bool match16(const unsigned char *a, const unsigned char *b) {
     return ( 0==memcmp(a,b,2) );
   }
 
