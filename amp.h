@@ -11,7 +11,6 @@ class Mustang;
 // F57 Champ
 // F65 Deluxe
 // F65 Princeton
-// F65 Twin
 // 60s Thrift
 //
 class AmpCC {
@@ -76,6 +75,8 @@ private:
   }
   // Noise Gate Custom Depth
   virtual int cc91( int value, unsigned char *cmd ) { return continuous_control( 0x09, 0x09, 0x0c, value, cmd );}
+  // Dummy in base class
+  virtual int cc92( int value, unsigned char *cmd ) { return -1;}
 };
 
 
@@ -116,6 +117,15 @@ private:
   virtual int cc78( int value, unsigned char *cmd ) { return continuous_control( 0x07, 0x07, 0x0c, value, cmd );}
   // Master Volume
   virtual int cc79( int value, unsigned char *cmd ) { return continuous_control( 0x03, 0x03, 0x0c, value, cmd );}
+  // Bright Switch
+  virtual int cc92( int value, unsigned char *cmd ) { 
+    // Inverted logic
+    unsigned char flag;
+    // 0 --> Bright On
+    if ( value>63 && value <=127 ) flag = 0;
+    else                           flag = 1;
+    return discrete_control( 0x14, 0x14, 0x8d, value, cmd );
+  }
 };
   
 
@@ -169,6 +179,24 @@ public:
 private:
   // Presence
   virtual int cc78( int value, unsigned char *cmd ) { return continuous_control( 0x07, 0x07, 0x0c, value, cmd );}
+};
+  
+
+// F65 Twin
+//
+class AmpCC8 : public AmpCC {
+public:
+  AmpCC8( Mustang * theAmp, const unsigned char *model, const unsigned char theSlot ) : AmpCC(theAmp,model,theSlot) {}
+private:
+  // Bright Switch
+  virtual int cc92( int value, unsigned char *cmd ) { 
+    // Inverted logic
+    unsigned char flag;
+    // 0 --> Bright On
+    if ( value>63 && value <=127 ) flag = 0;
+    else                           flag = 1;
+    return discrete_control( 0x14, 0x14, 0x8d, value, cmd );
+  }
 };
   
 

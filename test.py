@@ -345,9 +345,12 @@ if single == "all" or single == "reverb":
 if single == "all" or single == "delay":
     #      Model           Ctrl     v2only
     delay_test = (
-        ( "Mono Delay", 1, "AAAAA",  False ),
-        ( "Multitap",   4, "AAAAD03", False ),
-        ( "Tape Delay", 8, "AAAAA",  False )
+        ( "Mono Delay",         1, "AAAAA",  False ),
+        ( "Mono Echo Filter",   2, "AAAAAA",  False ),
+        ( "Stereo Echo Filter", 3, "AAAAAA",  False ),
+        ( "Multitap",           4, "AAAAD03", False ),
+        ( "Tape Delay",         8, "AAAAAA",  False ),
+        ( "Stereo Tape Delay",  9, "AAAAAA",  False )
     )
     run_delay_test( delay_test, outport )
 
@@ -355,8 +358,8 @@ if single == "all" or single == "amp":
     #      Model,                  Ctrl                 v2only
     amp_test = ( 
         ( "Studio Preamp",     13, "AAAAA--D04D12",     True  ),
-
-        ( "Fender 65 Twin",     6, "AAAAAD02AD04D12",   False ), 
+        # Test custom noise gate and bright switch
+        ( "Fender 65 Twin",     6, "AAAAAD02AD04D12--D09AD01",   False ), 
         ( "Fender SuperSonic",  7, "AAAAAD02AD04D12AA", False ),
         ( "British 60s",        8, "AAAAAD02AD04D12AA", False ),
         ( "British 70s",        9, "AAAAAD02AD04D12AA", False ),

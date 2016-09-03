@@ -527,7 +527,6 @@ Mustang::updateAmpObj( const unsigned char *data ) {
        match16(f57_champ_id,model) ||
        match16(f65_deluxe_id,model) ||
        match16(f65_princeton_id,model) ||
-       match16(f65_twin_id,model) ||
        match16(s60s_thrift_id,model) ) {
     new_amp = new AmpCC( this, model, 0 );
   }
@@ -555,6 +554,9 @@ Mustang::updateAmpObj( const unsigned char *data ) {
   }
   else if ( match16(f57_twin_id,model) ) {
     new_amp = new AmpCC7( this, model, 0 );
+  }
+  else if ( match16(f65_twin_id,model) ) {
+    new_amp = new AmpCC8( this, model, 0 );
   }
   else if ( match16(null_amp_id,model) ) {
     new_amp = new NullAmpCC( this, model, 0 );
