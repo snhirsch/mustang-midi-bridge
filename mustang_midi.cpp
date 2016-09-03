@@ -6,6 +6,18 @@
 
 #include "mustang.h"
 
+// If you see a compiler error complaining about a missing 
+// symbol 'RtMidiError' you probably have an old version of
+// of the library and will need to build with this flag:
+// $ make CPPFLAGS=-DRTMIDI_2_0
+//
+
+#ifdef RTMIDI_2_0
+# define RT_ERROR RtError
+#else 
+# define RT_ERROR RtMidiError
+#endif
+
 static Mustang mustang;
 
 static int channel;
@@ -140,7 +152,7 @@ int main( int argc, const char **argv ) {
     try {
       input_handler.openVirtualPort( argv[2] );
     }
-    catch ( RtError &error ) {
+    catch ( RT_ERROR &error ) {
       exit( 1 );
     }
   }
@@ -149,7 +161,7 @@ int main( int argc, const char **argv ) {
     try {
       input_handler.openPort( port );
     }
-    catch ( RtError &error ) {
+    catch ( RT_ERROR &error ) {
       exit( 1 );
     }
   }
