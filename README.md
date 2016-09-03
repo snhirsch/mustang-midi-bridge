@@ -1,33 +1,8 @@
 # mustang-midi-bridge
 
-Allow Fender Mustang series guitar amplifiers to be controlled by MIDI
-messages
-
-# What's New
-
-Complete rewrite and restructure of code based on ever-increasing
-familiarity with the Mustang communication protocol and API.  The
-bridge code is now fully mulithreaded.  A persistent background thread
-is constantly listening to incoming traffic from the amp and updating
-shared data as necessary.  This greatly increases stability and makes
-the bridge tolerant of manual adjustments on the amplifier while
-nominally under MIDI control.  In particular, it is now possible to
-engage the tuner function on the amp without ill side-effects.
-
-The command line parameter for MIDI controller port is now assumed to
-start at 0 rather than 1 in order to match the way Linux ALSA
-enumerates devices (see 'Run' below).
-
-I have added a runtime framework that starts and stops the program
-automatically based on attached MIDI devices. There is a small amount
-of customization required to account for your specific amp model and
-MIDI controller interface. Please see below (for experts) or the
-Install Wiki page (link below) for complete step-by-step details.
-
-Support added for amp and effects models specific to the Mustang v2
-products.
-
-Added a python script to drive regression testing.
+This application enables a small computer running Linux to translate
+MIDI messages to the proprietary USB protocol used by Fender Mustang
+amplifiers.
 
 # Introduction
 
@@ -35,11 +10,12 @@ Mustang bridge implements about 99% of the published MIDI spec for the
 Fender Mustang Floor pedal with extensions to support features added
 to the 'v2' series.
 
-I am developing on a Ubuntu Precise desktop machine, but the code is
+Code is developed on a Ubuntu Precise desktop machine, but is
 routinely tested on a Raspberry Pi 'B' and Beagelbone Green to ensure
-these remain viable deployment targets.  I have had just enough issues
-with USB on the RPi to make me leary of that platform and am
-recommending the BBG for real-world use.
+these remain viable deployment targets.
+
+(Due to occasional issues with USB on the RPi I am recommending the
+BBG for live performance use - YMMV)
 
 Special thanks to:
 
@@ -187,3 +163,29 @@ devices are powered up.
 I've had success using a passive USB hub with the single USB on the
 BBG, but YMMV since most USB<->5Pin MIDI converters draw some degree
 of bus power.  A powered hub might be necessary in some situations.
+
+# Recent Changes
+
+Complete rewrite and restructure of code based on ever-increasing
+familiarity with the Mustang communication protocol and API.  The
+bridge code is now fully mulithreaded.  A persistent background thread
+is constantly listening to incoming traffic from the amp and updating
+shared data as necessary.  This greatly increases stability and makes
+the bridge tolerant of manual adjustments on the amplifier while
+nominally under MIDI control.  In particular, it is now possible to
+engage the tuner function on the amp without ill side-effects.
+
+The command line parameter for MIDI controller port is now assumed to
+start at 0 rather than 1 in order to match the way Linux ALSA
+enumerates devices (see 'Run' below).
+
+I have added a runtime framework that starts and stops the program
+automatically based on attached MIDI devices. There is a small amount
+of customization required to account for your specific amp model and
+MIDI controller interface. Please see below (for experts) or the
+Install Wiki page (link below) for complete step-by-step details.
+
+Support added for amp and effects models specific to the Mustang v2
+products.
+
+Added a python script to drive regression testing.
