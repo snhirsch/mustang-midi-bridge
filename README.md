@@ -90,23 +90,37 @@ following exceptions:
 
   + Tap Tempo
 
-    (Stay tuned...)
+    I was not able to find the magic incantation to set tap tempo over
+    USB (if, indeed, it's even possible). However, this function can
+    be assigned to one of the Fender foot pedals if you need it at
+    your feet.  Haven't totally given up on this and have an idea for
+    "faking" it over MIDI.  Now I just need the time to code it...
   
 # Prerequisites
 
-  + For Ubuntu Precise or Debian Jessie:
+  + For Ubuntu Precise or Debian Jessie the following packages must be
+    present.  Install all but 'pyusb' with 'apt-get' (see below).
 
     - libasound2
     - librtmidi-dev
     - libusb-1.0-0-dev
     - libjack0 (Precise) 
     - libjackQ (Jessie)
-
-  + If you want to run the regression tests, you'll also need:
-
+    - at
     - python2.7
     - python2.7-dev
     - python-pip
+    - pyusb
+```
+    NOTE: The python-pip install may segfault at the end, but it doesn't
+          seem to affect anything.
+```
+    'pyusb' must be installed last using 'pip':
+
+    $ pip install pyusb
+
+  + If you want to run the regression tests, you'll also need:
+
     - 'Mido' Python MIDI extension
     - Python rtmidi extension
 

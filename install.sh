@@ -33,8 +33,10 @@ echo "Copy init script to $INITDIR and register"
 cp -f mustang_bridge $INITDIR
 chmod 0755 $INITDIR/mustang_bridge
 chown root:root $INITDIR/mustang_bridge
-
 update-rc.d mustang_bridge defaults
+
+# Run it right now to create the /var/run directory
+$INITDIR/mustang_bridge
 
 echo "Copy udev rules to $UDEVDIR and refresh system"
 
