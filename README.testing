@@ -1,0 +1,21 @@
+To test, start bridge in virtual input mode and listen to MIDI channel
+1 for messages:
+
+$ mustang_midi "TestPort" 1
+
+(Name does not matter, since it needs to be referenced by device id
+assigned by Linux MIDI subsystem)
+
+Then, find device id:
+
+$ aconnect -o
+ client 14: 'Midi Through' [type=kernel]
+    0 'Midi Through Port-0'
+ client 128: 'RtMidi Input Client' [type=user]
+    0 'TestPort        '
+
+Given the above, open RtMidi:
+
+$ test.py "RtMidi Input Client 128:0" 1 [v1 | v2] {test name} 
+
+(Select appropriate amp series and optionally run only a single test)
