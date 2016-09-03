@@ -18,14 +18,11 @@ The command line parameter for MIDI controller port is now assumed to
 start at 0 rather than 1 in order to match the way Linux ALSA
 enumerates devices (see 'Run' below).
 
-I have added the first version of a runtime framework that starts and
-stops the program automatically based on attached MIDI devices. This
-seems to be working on a Beaglebone SBC, but has not been extensively
-tested or documented yet. There is a small amount of customization
-required to account for your specific amp model and MIDI controller
-interface. Technically oriented users can probably work this out,
-otherwise wait a bit until I can refine the packaging and arrange to
-have the various pieces configured from a common setup file.
+I have added a runtime framework that starts and stops the program
+automatically based on attached MIDI devices. There is a small amount
+of customization required to account for your specific amp model and
+MIDI controller interface. Please see below (for experts) or the
+Install Wiki page (link below) for complete step-by-step details.
 
 Support added for amp and effects models specific to the Mustang v2
 products.
@@ -40,8 +37,8 @@ to the 'v2' series.
 
 I am developing on a Ubuntu Precise desktop machine, but the code is
 routinely tested on a Raspberry Pi 'B' and Beagelbone Green to ensure
-these remain viable deployment targets.  At this point I'm still
-experiencing issues with USB latency on the RPi and am currently
+these remain viable deployment targets.  I have had just enough issues
+with USB on the RPi to make me leary of that platform and am
 recommending the BBG for real-world use.
 
 Special thanks to:
@@ -62,10 +59,10 @@ I have written a Wiki page here:
 
 https://github.com/snhirsch/mustang-midi-bridge/wiki/Install
 
-that attempts to walk less technical users through the installation
-and build process on Raspberry Pi or Beaglebone.  It's hard to know
-what level of detail to hit and suggestions or comments would be
-appreciated if I've omitted or glossed over something critical.
+that attempts a detailed walk-through of the installation and build
+process on Raspberry Pi or Beaglebone.  It's hard to know what level
+of detail to hit and suggestions or comments would be appreciated if
+I've omitted or glossed over something critical.
 
 # Status
 
@@ -136,12 +133,15 @@ Would appreciate feedback on requirements for other distributions.
 # Build
 ```
 $ make
+ or
+$ make CPPFLAGS=-DRTMIDI_2_0 (for older librtmidi)
 ```
 
 # Configure
 
   1. Update ```60-midi.rules``` with the USB VID (vendor id) and PID
-(product id) of your controller.
+(product id) of your controller.  Must be on both lines, although the
+attribute names are different.
 
   2. Edit ```mustang_bridge_start``` to set values marked as user
 edits.  In addition to setting the VID and PID, you need to specify
