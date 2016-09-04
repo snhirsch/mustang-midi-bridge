@@ -23,7 +23,9 @@ Special thanks to:
   path with reverse-engineering of Fender's communication scheme.
 
   + Robert Fransson (aka Codesmart) of Primova Sound for feedback and
-  encouragement and general programming wizardry). 
+  encouragement and general programming wizardry). And a special
+  thanks for allowing me to include his nicely formatted MIDI spec (in
+  doc subdirectory).
 
   + Robert Heitman of Triton Interactive, author of the Android
   'Remuda' application, who provided valuable insight into the darker
@@ -39,6 +41,17 @@ that attempts a detailed walk-through of the installation and build
 process on Raspberry Pi or Beaglebone.  It's hard to know what level
 of detail to hit and suggestions or comments would be appreciated if
 I've omitted or glossed over something critical.
+
+If all this turns out to be too technical, Primova Sound offers a
+plug-and-play hardware appliance that will bridge to the Mustang and
+also provide a link to the non-MIDI-compliant Roland GP-10 pedal.
+
+http://www.primovasound.com/
+
+Disclaimer: I have no involvement with Primova other than cooperating
+with Codesmart to ensure our solutions presented the same MIDI API for
+Mustang amp control.  And, as an owner of the older MIDX-10 product I
+can vouch for the quality of their hardware.
 
 # Status
 
