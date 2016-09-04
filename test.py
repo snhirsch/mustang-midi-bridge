@@ -21,13 +21,13 @@ cc = mido.Message('control_change')
 type = 0
 
 def analog_send( outport, sleeptime=0.25 ):
-    for value in [ 0, 32, 64, 96, 127, 96, 64, 32, 0 ]:
+    for value in [ 0, 32, 64, 96, 127, 0 ]:
         cc.value = value
         outport.send( cc )
         sleep( sleeptime )
 
 def discrete_send( outport, max ):
-    for value in it.chain( range(0,max+1), range(max,-1,-1) ):
+    for value in it.chain( range(0,max+1), range(0,1) ):
         cc.value = value
         outport.send( cc )
         sleep( 0.25 )

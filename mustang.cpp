@@ -121,16 +121,30 @@ Mustang::handleInput( void ) {
         }
         case 0x04:
         {
-          // Preset name
+          // PRESET NAME
+          // 0 = Amp preset, 1 = Mod preset, 2 = Delay/Reverb preset
+          int preset_category = read_buf[3];
+
+          // Rank within preset category
           int idx = read_buf[4];
+
+          // Mod
+          if      ( 1 == preset_category ) idx += 100;
+          // Rev/Delay
+          else if ( 2 == preset_category ) idx += 112;
+
+          // Preset name
           pthread_mutex_lock( &preset_names_sync.lock );
 
           strncpy( preset_names[idx], (const char *)read_buf+16, 32 );
           preset_names[idx][32] = '\0';
-          // Always take the most recent one as the current preset. This
-          // will properly account for its appearance at the end of a complete
-          // parm dump or when manual patch change occurs.
-          curr_preset_idx = idx;
+
+          // Always take the most recent amp preset name as
+          // current. This will properly account for its appearance at
+          // the end of a complete parm dump or when manual patch
+          // change occurs. Not clear if or how current EFX preset
+          // is reported.
+          if ( 0 == preset_category ) curr_preset_idx = idx;
 
           pthread_mutex_unlock( &preset_names_sync.lock );
           break;

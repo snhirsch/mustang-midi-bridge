@@ -56,9 +56,11 @@ class Mustang {
 
   // Synchronize access to preset names
   Condition<bool> preset_names_sync;
-  char preset_names[100][33];
 
-  // Index to current preset 
+  // 0-99 = amp preset, 100-111 = mod preset, 112-123 = rev/delay preset
+  char preset_names[124][33];
+
+  // Index to current amp preset 
   unsigned curr_preset_idx;
 
   // Manage access to each DSP data block and/or associated object.
