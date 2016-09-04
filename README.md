@@ -10,9 +10,9 @@ Mustang bridge implements about 99% of the published MIDI spec for the
 Fender Mustang Floor pedal with extensions to support features added
 to the 'v2' series.
 
-Code is developed on a Ubuntu Precise desktop machine, but is
-routinely tested on a Raspberry Pi 'B' and Beagelbone Green to ensure
-these remain viable deployment targets.
+Code is developed on a Ubuntu Precise desktop machine, but I routinely
+test on a Raspberry Pi 'B' and Beagelbone Green to ensure these remain
+viable deployment targets.
 
 (Due to occasional issues with USB on the RPi I am recommending the
 BBG for live performance use - YMMV)
@@ -22,12 +22,12 @@ Special thanks to:
   + The original developer and contributors to 'PLUG' who blazed the
   path with reverse-engineering of Fender's communication scheme.
 
-  + Robert Fransson (Codesmart on VGuitar Forums) for feedback and
-  encouragement - and for being a tireless programming wizard :-).
+  + Robert Fransson (aka Codesmart) of Primova Sound for feedback and
+  encouragement and general programming wizardry). 
 
-  + Robert Heitman, author of the Android 'Remuda' application for
-  Mustang amp control, who provided valuable insights into various
-  subtleties that would have otherwise escaped me.
+  + Robert Heitman of Triton Interactive, author of the Android
+  'Remuda' application, who provided valuable insight into the darker
+  corners of Mustang communication protocol.
 
 ## For the non-techies
 
@@ -177,15 +177,16 @@ engage the tuner function on the amp without ill side-effects.
 
 The command line parameter for MIDI controller port is now assumed to
 start at 0 rather than 1 in order to match the way Linux ALSA
-enumerates devices (see 'Run' below).
+enumerates devices.
 
 I have added a runtime framework that starts and stops the program
 automatically based on attached MIDI devices. There is a small amount
 of customization required to account for your specific amp model and
-MIDI controller interface. Please see below (for experts) or the
-Install Wiki page (link below) for complete step-by-step details.
+MIDI controller interface. 
 
 Support added for amp and effects models specific to the Mustang v2
 products.
 
-Added a python script to drive regression testing.
+Added a python script to drive regression testing. Tests require LCD
+display for feedback and are not going to be of much use unless you
+have a Mustang III, IV or V model.
