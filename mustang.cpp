@@ -107,6 +107,10 @@ Mustang::handleInput( void ) {
     if ( 0==memcmp(read_buf,state_prefix,2) ) {
       // Only care about amp state messages, and not even all of them...
       int dsp_category = read_buf[2];
+
+      // 0 = AMP preset / DSP state, 1 = MI/II Mod preset, 2 = MI/II Delay/Reverb preset
+      int preset_category = read_buf[3];
+
       switch( dsp_category ) {
         // Response for DSP data and/or patch-change
         //
@@ -122,9 +126,6 @@ Mustang::handleInput( void ) {
         case 0x04:
         {
           // PRESET NAME
-          // 0 = Amp preset, 1 = Mod preset, 2 = Delay/Reverb preset
-          int preset_category = read_buf[3];
-
           // Rank within preset category
           int idx = read_buf[4];
 
@@ -152,67 +153,82 @@ Mustang::handleInput( void ) {
         case 0x05:
         {
           // AMP
-          // DSP parms (make 0x05..0x0a normal to zero)
-          int idx = dsp_category - 5;
-          pthread_mutex_lock( &dsp_sync[idx].lock );
+          if ( 0==preset_category ) {
+            // (Don't want MI/II preset data here)
 
-          memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
-          updateAmpObj( read_buf );
-
-          pthread_mutex_unlock( &dsp_sync[idx].lock );
+            // DSP parms (make 0x05..0x0a normal to zero)
+            int idx = dsp_category - 5;
+            pthread_mutex_lock( &dsp_sync[idx].lock );
+            
+            memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
+            updateAmpObj( read_buf );
+            
+            pthread_mutex_unlock( &dsp_sync[idx].lock );
+          }
           break;
         }
         case 0x06:
         {
           // STOMP
-          int idx = dsp_category - 5;
-          pthread_mutex_lock( &dsp_sync[idx].lock );
-
-          memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
-          updateStompObj( read_buf );
-
-          pthread_mutex_unlock( &dsp_sync[idx].lock );
+          if ( 0==preset_category ) {
+            int idx = dsp_category - 5;
+            pthread_mutex_lock( &dsp_sync[idx].lock );
+            
+            memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
+            updateStompObj( read_buf );
+            
+            pthread_mutex_unlock( &dsp_sync[idx].lock );
+          }
           break;
         }
         case 0x07:
         {
           // MOD
-          int idx = dsp_category - 5;
-          pthread_mutex_lock( &dsp_sync[idx].lock );
+          if ( 0==preset_category ) {
+            int idx = dsp_category - 5;
+            pthread_mutex_lock( &dsp_sync[idx].lock );
 
-          memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
-          updateModObj( read_buf );
+            memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
+            updateModObj( read_buf );
           
-          pthread_mutex_unlock( &dsp_sync[idx].lock );
+            pthread_mutex_unlock( &dsp_sync[idx].lock );
+          }
           break;
         }
         case 0x08:
         {
           // DELAY
-          int idx = dsp_category - 5;
-          pthread_mutex_lock( &dsp_sync[idx].lock );
+          if ( 0==preset_category ) {
+            int idx = dsp_category - 5;
+            pthread_mutex_lock( &dsp_sync[idx].lock );
 
-          memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
-          updateDelayObj( read_buf );
+            memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
+            updateDelayObj( read_buf );
           
-          pthread_mutex_unlock( &dsp_sync[idx].lock );
+            pthread_mutex_unlock( &dsp_sync[idx].lock );
+          }
           break;
         }
         case 0x09:
         {
           // REVERB
-          int idx = dsp_category - 5;
-          pthread_mutex_lock( &dsp_sync[idx].lock );
-
-          memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
-          updateReverbObj( read_buf );
-          
-          pthread_mutex_unlock( &dsp_sync[idx].lock );
+          if ( 0==preset_category ) {
+            int idx = dsp_category - 5;
+            pthread_mutex_lock( &dsp_sync[idx].lock );
+            
+            memcpy( dsp_parms[idx], (const char *)read_buf, 64 );
+            updateReverbObj( read_buf );
+            
+            pthread_mutex_unlock( &dsp_sync[idx].lock );
+          }
           break;
         }
         case 0x0a:
         {
           // EXP PEDAL
+          // (No need to guard for MI/II EFX preset here, since they 
+          //  do not support pedals)
+          //
           int idx = dsp_category - 5;
           pthread_mutex_lock( &dsp_sync[idx].lock );
 
