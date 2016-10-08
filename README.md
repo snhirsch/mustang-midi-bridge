@@ -8,7 +8,9 @@ amplifiers.
 
 Mustang bridge implements about 99% of the published MIDI spec for the
 Fender Mustang Floor pedal with extensions to support features added
-to the 'v2' series.
+to the 'v2' series:
+
+https://github.com/snhirsch/mustang-midi-bridge/blob/master/doc/MIDX20_Midi_Spec.pdf
 
 Code is developed on a Ubuntu Precise desktop machine, but I routinely
 test on a Raspberry Pi 'B' and Beagelbone Green to ensure these remain
