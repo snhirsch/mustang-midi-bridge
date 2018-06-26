@@ -1,4 +1,9 @@
 
+# Newer distributions put rtmidi headers in subdirectory
+RTMIDI_INC := $(shell ls -d /usr/include/rtmidi 2>/dev/null | tail -n 1)
+ifneq (,$(RTMIDI_INC))
+  INCDIRS = -I/usr/include/rtmidi
+endif
 
 SRC = $(wildcard *.cpp)
 OBJ = $(subst .cpp,.o,$(SRC))
