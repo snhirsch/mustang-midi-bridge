@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import os
+import sys
 from os.path import expanduser
 from pwd import getpwnam
 from grp import getgrnam
