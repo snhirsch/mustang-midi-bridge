@@ -3,8 +3,8 @@
 # Provides:          mustang_bridge
 # Required-Start:    mountkernfs
 # Required-Stop:
-# Default-Start:     S
-# Default-Stop:
+# Default-Start:    2 3 4 5
+# Default-Stop:    0 1 6
 # Short-Description: Setup /var/run/mustang directory
 ### END INIT INFO
 
