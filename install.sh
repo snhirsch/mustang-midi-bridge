@@ -36,7 +36,7 @@ chown root:root $INITDIR/mustang_bridge
 update-rc.d mustang_bridge defaults
 
 # Run it right now to create the /var/run directory
-$INITDIR/mustang_bridge
+$INITDIR/mustang_bridge start
 
 echo "Copy udev rules to $UDEVDIR and refresh system"
 
