@@ -4,6 +4,14 @@ This application enables a small computer running Linux to translate
 MIDI messages to the proprietary USB protocol used by Fender Mustang
 amplifiers.
 
+# NEW: Fixes for Raspian Stretch distribution!
+
+Thanks to some valued troubleshooting from the user community, I have
+committed a few fixes to mitigate problems on the newer "Stretch"
+distribution.  All but one are in the code base and should be
+backwards compatible with "Jessie", but one requires editing of a
+system file.  Details can be found in the installation Wiki.
+
 # Introduction
 
 Mustang bridge implements about 99% of the published MIDI spec for the
